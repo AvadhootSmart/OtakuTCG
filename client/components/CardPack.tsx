@@ -6,6 +6,7 @@ import { CardsPopup } from "./CardsPopup";
 import { buyPack } from "@/api/marketplace";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useUserStore } from "@/store/useUserStore";
 
 interface CardPackProps {
     pack: IPack;
@@ -15,11 +16,13 @@ interface CardPackProps {
 
 export function CardPack({ pack, variant = 'marketplace', onOpen }: CardPackProps) {
     const [isBuying, setIsBuying] = useState(false);
+    const { updateBalance } = useUserStore();
 
     const handleBuy = async () => {
         setIsBuying(true);
         try {
             const res = await buyPack(pack._id);
+            updateBalance(res.balance);
             toast.success(`Purchased ${pack.name}! New balance: ${res.balance}`);
             // Force a refresh of the profile/navbar balance if possible, 
             // but for now the user will see it on manual refresh or next action.
@@ -66,20 +69,22 @@ export function CardPack({ pack, variant = 'marketplace', onOpen }: CardPackProp
                     </div>
 
                     {/* Odds Section - Small Rounded Card */}
-                    <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Drop Rates</p>
-                        <div className="grid grid-cols-2 gap-2">
-                            {pack.probabilities.map((prob: any, idx: number) => (
-                                <div key={idx} className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prob.color }} />
-                                        <span className="text-[9px] font-black uppercase tracking-tight opacity-70">{prob.rarity}</span>
+                    {pack.probabilities && pack.probabilities.length > 0 && (
+                        <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Drop Rates</p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {pack.probabilities.map((prob: any, idx: number) => (
+                                    <div key={idx} className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prob.color }} />
+                                            <span className="text-[9px] font-black uppercase tracking-tight opacity-70">{prob.rarity}</span>
+                                        </div>
+                                        <span className="text-[10px] font-black">{prob.chance}%</span>
                                     </div>
-                                    <span className="text-[10px] font-black">{prob.chance}%</span>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Bottom Section */}
                     <div className="mt-auto space-y-4 pt-2 border-t border-border/40">

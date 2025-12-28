@@ -15,3 +15,8 @@ export const buyPack = async (id: string): Promise<{ message: string, balance: n
     const response = await api.post(`/packs/buy/${id}`);
     return response.data;
 };
+
+export const openPack = async (id: string): Promise<{ message: string, card: any, remainingPacks: any[] }> => {
+    const response = await api.post(`/packs/open/${id}`);
+    return response.data;
+};

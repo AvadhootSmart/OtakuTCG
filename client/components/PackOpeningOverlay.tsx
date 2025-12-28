@@ -7,32 +7,48 @@ import { TradingCard } from "./TradingCard";
 import { cards as allCards } from "../static_data/cards";
 import { CardPack as PackType } from "../static_data/packs";
 
+import { openPack } from "@/api/marketplace";
+import { IPack } from "@/types/pack";
+import { toast } from "sonner";
+
 interface PackOpeningOverlayProps {
     isOpen: boolean;
     onClose: () => void;
-    pack: PackType | null;
+    pack: IPack | null;
 }
 
 export function PackOpeningOverlay({ isOpen, onClose, pack }: PackOpeningOverlayProps) {
     const [status, setStatus] = useState<"idle" | "shaking" | "opening" | "revealed">("idle");
-    const [revealedCards, setRevealedCards] = useState(allCards.slice(0, 4)); // Mocking 4 cards for now
+    const [revealedCard, setRevealedCard] = useState<any>(null);
+    const [isOpening, setIsOpening] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             setStatus("idle");
+            setRevealedCard(null);
             // Auto start shaking after a small delay
             const timer = setTimeout(() => setStatus("shaking"), 500);
             return () => clearTimeout(timer);
         }
     }, [isOpen]);
 
-    const handlePackClick = () => {
-        if (status === "shaking") {
-            setStatus("opening");
-            // Artificial delay for the "opening" flash
-            setTimeout(() => {
-                setStatus("revealed");
-            }, 800);
+    const handlePackClick = async () => {
+        if (status === "shaking" && pack && !isOpening) {
+            setIsOpening(true);
+            try {
+                const res = await openPack(pack._id);
+                setRevealedCard(res.card);
+                setStatus("opening");
+                // Artificial delay for the "opening" flash
+                setTimeout(() => {
+                    setStatus("revealed");
+                }, 800);
+            } catch (error: any) {
+                toast.error(error.response?.data?.error || "Failed to open pack");
+                onClose();
+            } finally {
+                setIsOpening(false);
+            }
         }
     };
 
@@ -67,7 +83,7 @@ export function PackOpeningOverlay({ isOpen, onClose, pack }: PackOpeningOverlay
                     {/* The Pack Opening Sequence */}
                     {status !== "revealed" && (
                         <motion.div
-                            layoutId={`pack-${pack.id}`}
+                            layoutId={`pack-${pack._id}`}
                             initial={{ scale: 0.8, y: 50, opacity: 0 }}
                             animate={{
                                 scale: 1,
@@ -100,7 +116,7 @@ export function PackOpeningOverlay({ isOpen, onClose, pack }: PackOpeningOverlay
                                 </motion.div>
                                 <h2 className="text-3xl font-black rock-salt mb-2">{pack.name}</h2>
                                 <p className="text-sm font-bold uppercase tracking-tighter opacity-80">
-                                    {status === "idle" ? "Ready to unleash?" : "Click to Rip Open!"}
+                                    {status === "idle" ? "Ready to unleash?" : (isOpening ? "Summoning..." : "Click to Rip Open!")}
                                 </p>
                             </div>
                         </motion.div>
@@ -126,12 +142,12 @@ export function PackOpeningOverlay({ isOpen, onClose, pack }: PackOpeningOverlay
                         )}
                     </AnimatePresence>
 
-                    {/* Revealed Cards Grid */}
-                    {status === "revealed" && (
+                    {/* Revealed Card Display */}
+                    {status === "revealed" && revealedCard && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="w-full max-w-7xl"
+                            className="w-full max-w-7xl flex flex-col items-center"
                         >
                             <div className="text-center mb-12">
                                 <motion.h2
@@ -139,30 +155,24 @@ export function PackOpeningOverlay({ isOpen, onClose, pack }: PackOpeningOverlay
                                     animate={{ y: 0 }}
                                     className="text-5xl font-black rock-salt mb-2"
                                 >
-                                    Pack Results
+                                    New Summon!
                                 </motion.h2>
                                 <p className="text-muted-foreground font-bold uppercase tracking-widest text-sm">
-                                    You pulled {revealedCards.length} rare items!
+                                    You've pulled a <span className="text-amber-400">{revealedCard.rarity}</span> warrior!
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 justify-items-center">
-                                {revealedCards.map((card, idx) => (
-                                    <motion.div
-                                        key={idx}
-                                        initial={{ opacity: 0, y: 30, scale: 0.8, rotateY: 90 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1, rotateY: 0 }}
-                                        transition={{
-                                            delay: idx * 0.15,
-                                            type: "spring",
-                                            stiffness: 100,
-                                            damping: 12
-                                        }}
-                                    >
-                                        <TradingCard {...card} />
-                                    </motion.div>
-                                ))}
-                            </div>
+                            <motion.div
+                                initial={{ opacity: 0, y: 30, scale: 0.8, rotateY: 90 }}
+                                animate={{ opacity: 1, y: 0, scale: 1, rotateY: 0 }}
+                                transition={{
+                                    type: "spring",
+                                    stiffness: 100,
+                                    damping: 12
+                                }}
+                            >
+                                <TradingCard {...revealedCard} />
+                            </motion.div>
 
                             <motion.div
                                 initial={{ opacity: 0 }}

@@ -9,6 +9,7 @@ import { UserProfile } from './models/UserProfile.model';
 import { seedDatabase } from './db/seed';
 import cardRoutes from './routes/card.route';
 import packRoutes from './routes/pack.route';
+import userRoutes from './routes/user.route';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -25,30 +26,7 @@ app.all("/api/auth/*", toNodeHandler(auth))
 
 app.use("/api/cards", cardRoutes);
 app.use("/api/packs", packRoutes);
-
-app.get('/api/profile', async (req, res) => {
-    try {
-        const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-        if (!session) {
-            return res.status(401).json({ error: "Unauthorized" });
-        }
-        const profile = await UserProfile.findOne({ userId: session.user.id })
-            .populate("ownedCards.cardId")
-            .populate("inventoryPacks.packId");
-        if (!profile) {
-            // Create profile if it doesn't exist for some reason
-            const newProfile = await UserProfile.create({
-                userId: session.user.id,
-                balance: 500
-            });
-            return res.json(newProfile);
-        }
-        res.json(profile);
-    } catch (error) {
-        console.error("Profile fetch error:", error);
-        res.status(500).json({ error: "Internal Server Error" });
-    }
-});
+app.use("/api/user", userRoutes);
 
 app.get('/', (req, res) => {
     res.send('Backend is running successfully!');

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Pack } from "../models/Pack.model";
 import { Card, ICard } from "../models/Card.model";
 import { auth } from "../utils/auth";
-import { calculatePackProbabilities } from "../utils/rarity";
+import { calculatePackProbabilities, drawCardFromPack } from "../utils/rarity";
 import { UserProfile } from "../models/UserProfile.model";
 
 const router = Router();
@@ -40,19 +40,18 @@ router.post("/", async (req, res) => {
         }
 
         const pack = await Pack.create(req.body);
-        res.status(21).json(pack);
+        res.status(201).json(pack);
     } catch (error) {
         res.status(400).json({ error: "Failed to create pack" });
     }
 });
 
-// Update pack before saving to handle probability calculation
+// Update pack
 router.put("/:id", async (req, res) => {
     try {
         const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
         if (!session) return res.status(401).json({ error: "Unauthorized" });
 
-        // If cards are being updated, we need to recalculate probabilities
         if (req.body.cards) {
             const cards = (await Card.find({ _id: { $in: req.body.cards } })) as ICard[];
             req.body.probabilities = calculatePackProbabilities(cards);
@@ -96,11 +95,9 @@ router.post("/buy/:id", async (req, res) => {
             return res.status(400).json({ error: "Insufficient balance" });
         }
 
-        // Deduct balance
         profile.balance -= pack.price;
 
-        // Add pack to inventory
-        const existingPack = profile.inventoryPacks.find((p: any) => p.packId === pack._id.toString());
+        const existingPack = profile.inventoryPacks.find((p: any) => p.packId.toString() === pack._id.toString());
         if (existingPack) {
             existingPack.count += 1;
         } else {
@@ -112,11 +109,58 @@ router.post("/buy/:id", async (req, res) => {
         }
 
         await profile.save();
-
         res.json({ message: "Pack purchased successfully", balance: profile.balance, profile });
     } catch (error) {
         console.error("Buy pack error:", error);
         res.status(500).json({ error: "Failed to purchase pack" });
+    }
+});
+
+// Open pack
+router.post("/open/:id", async (req, res) => {
+    try {
+        const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
+        if (!session) return res.status(401).json({ error: "Unauthorized" });
+
+        const profile = await UserProfile.findOne({ userId: session.user.id });
+        if (!profile) return res.status(404).json({ error: "User profile not found" });
+
+        const packIdx = profile.inventoryPacks.findIndex((p: any) => p.packId.toString() === req.params.id);
+        if (packIdx === -1 || profile.inventoryPacks[packIdx].count <= 0) {
+            return res.status(400).json({ error: "You don't own this pack" });
+        }
+
+        const pack = await Pack.findById(req.params.id).populate("cards");
+        if (!pack) return res.status(404).json({ error: "Pack data not found" });
+
+        const selectedCard = drawCardFromPack(pack.cards);
+
+        profile.inventoryPacks[packIdx].count -= 1;
+        if (profile.inventoryPacks[packIdx].count === 0) {
+            profile.inventoryPacks.splice(packIdx, 1);
+        }
+
+        const existingCard = profile.ownedCards.find((c: any) => c.cardId.toString() === selectedCard._id.toString());
+        if (existingCard) {
+            existingCard.count += 1;
+        } else {
+            profile.ownedCards.push({
+                cardId: selectedCard._id,
+                count: 1,
+                obtainedAt: new Date()
+            });
+        }
+
+        await profile.save();
+
+        res.json({
+            message: "Pack opened successfully",
+            card: selectedCard,
+            remainingPacks: profile.inventoryPacks
+        });
+    } catch (error) {
+        console.error("Open pack error:", error);
+        res.status(500).json({ error: "Failed to open pack" });
     }
 });
 

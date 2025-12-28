@@ -26,6 +26,11 @@ export interface IUserProfile {
 }
 
 export const getProfile = async (): Promise<IUserProfile> => {
-    const response = await api.get("/profile");
+    const response = await api.get("/user/profile");
+    return response.data;
+};
+
+export const buyCurrency = async (amount: number): Promise<{ message: string, balance: number }> => {
+    const response = await api.post("/user/buy-currency", { amount });
     return response.data;
 };

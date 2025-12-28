@@ -1,6 +1,7 @@
 "use client";
 
 import { Star, Shield, Target, Zap, Heart, Eye } from "lucide-react";
+import Image from "next/image";
 
 export interface CardAttributes {
     attack: number;
@@ -82,9 +83,10 @@ export function TradingCard({
 
             {/* Character Image - Now starts from the very top */}
             <div className="absolute top-0 left-0 w-full h-[70%] z-0">
-                <img
+                <Image
                     src={imageUrl}
                     alt={name}
+                    fill
                     className="w-full h-full object-cover object-top filter contrast-110 brightness-110 group-hover:scale-105 transition-transform duration-700"
                 />
                 {/* Gradient to smooth image transition into bottom section */}

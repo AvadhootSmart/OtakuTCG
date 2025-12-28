@@ -7,19 +7,20 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { AuthDialog } from "./auth-dialog";
 import { authClient } from "@/lib/auth-client";
-import { getProfile, IUserProfile } from "@/api/user";
+import { useUserStore } from "@/store/useUserStore";
+import { BuyCoinsDialog } from "./buy-coins-dialog";
 
 export function Navbar() {
     const { data: session } = authClient.useSession();
-    const [profile, setProfile] = useState<IUserProfile | null>(null);
+    const { profile, fetchProfile, setProfile } = useUserStore();
 
     useEffect(() => {
         if (session) {
-            getProfile().then(setProfile).catch(console.error);
+            fetchProfile();
         } else {
             setProfile(null);
         }
-    }, [session]);
+    }, [session, fetchProfile, setProfile]);
 
     return (
         <nav className="px-6 py-6 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -55,12 +56,14 @@ export function Navbar() {
                         {session ? (
                             <div className="flex items-center space-x-6">
                                 {profile && (
-                                    <div className="flex items-center px-3 py-1.5 bg-muted rounded-full border border-border">
-                                        <Coins className="w-4 h-4 text-yellow-500 mr-2" />
-                                        <span className="text-sm font-medium text-foreground">
-                                            {profile.balance}
-                                        </span>
-                                    </div>
+                                    <BuyCoinsDialog>
+                                        <div className="flex items-center px-3 py-1.5 bg-muted rounded-full border border-border cursor-pointer hover:bg-muted/80 transition-colors group">
+                                            <Coins className="w-4 h-4 text-yellow-500 mr-2 group-hover:scale-110 transition-transform" />
+                                            <span className="text-sm font-medium text-foreground">
+                                                {profile.balance}
+                                            </span>
+                                        </div>
+                                    </BuyCoinsDialog>
                                 )}
 
                                 <div className="flex items-center space-x-4">

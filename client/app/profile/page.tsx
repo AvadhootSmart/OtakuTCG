@@ -17,12 +17,15 @@ import { Button } from "../../components/ui/button";
 import Link from "next/link";
 import { motion } from "motion/react";
 
-import { getProfile, IUserProfile } from "@/api/user";
+import { useUserStore } from "@/store/useUserStore";
+import { PackOpeningOverlay } from "../../components/PackOpeningOverlay";
+import { IPack } from "@/types/pack";
 
 export default function ProfilePage() {
   const { data: session, isPending: sessionPending } = authClient.useSession();
-  const [profile, setProfile] = useState<IUserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { profile, isLoading: loading, fetchProfile } = useUserStore();
+  const [isOpeningPack, setIsOpeningPack] = useState(false);
+  const [selectedPack, setSelectedPack] = useState<IPack | null>(null);
 
   useEffect(() => {
     if (!sessionPending && !session) {
@@ -30,18 +33,21 @@ export default function ProfilePage() {
       return;
     }
 
-    if (session) {
-      getProfile()
-        .then((data: IUserProfile) => {
-          setProfile(data);
-          setLoading(false);
-        })
-        .catch((err: Error) => {
-          console.error("Failed to fetch profile", err);
-          setLoading(false);
-        });
+    if (session && !profile) {
+      fetchProfile();
     }
-  }, [session, sessionPending]);
+  }, [session, sessionPending, profile, fetchProfile]);
+
+  const handleOpenPack = (pack: IPack) => {
+    setSelectedPack(pack);
+    setIsOpeningPack(true);
+  };
+
+  const handleCloseOverlay = () => {
+    setIsOpeningPack(false);
+    setSelectedPack(null);
+    fetchProfile(); // Refresh to show new card
+  };
 
   if (sessionPending || loading) {
     return (
@@ -55,16 +61,20 @@ export default function ProfilePage() {
   }
 
   const userCards =
-    profile?.ownedCards?.map((oc: any) => ({
-      ...oc.cardId,
-      count: oc.count,
-    })) || [];
+    profile?.ownedCards
+      ?.filter((oc: any) => oc.cardId !== null)
+      .map((oc: any) => ({
+        ...oc.cardId,
+        count: oc.count,
+      })) || [];
 
   const userPacks =
-    profile?.inventoryPacks?.map((ip: any) => ({
-      ...ip.packId,
-      count: ip.count,
-    })) || [];
+    profile?.inventoryPacks
+      ?.filter((ip: any) => ip.packId !== null)
+      .map((ip: any) => ({
+        ...ip.packId,
+        count: ip.count,
+      })) || [];
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -154,7 +164,7 @@ export default function ProfilePage() {
             <div className="flex overflow-x-auto pb-8 gap-8 px-4 -mx-4 scrollbar-hide">
               {userPacks.map((pack: any, idx: number) => (
                 <motion.div
-                  key={`${idx}-${pack.id}`}
+                  key={`${idx}-${pack._id}`}
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{
@@ -162,9 +172,14 @@ export default function ProfilePage() {
                     delay: idx * 0.1,
                     ease: "easeOut",
                   }}
-                  className="min-w-[320px]"
+                  className="min-w-[320px] relative"
                 >
-                  <CardPack pack={pack} variant="bought" />
+                  <CardPack pack={pack} variant="bought" onOpen={() => handleOpenPack(pack)} />
+                  {pack.count > 1 && (
+                    <div className="absolute -top-3 -right-2 z-40 bg-amber-500 text-black w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shadow-[0_10px_20px_rgba(0,0,0,0.3)] border-2 border-background rotate-12">
+                      x{pack.count}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -278,6 +293,12 @@ export default function ProfilePage() {
           )}
         </section>
       </main>
+
+      <PackOpeningOverlay
+        isOpen={isOpeningPack}
+        onClose={handleCloseOverlay}
+        pack={selectedPack}
+      />
     </div>
   );
 }

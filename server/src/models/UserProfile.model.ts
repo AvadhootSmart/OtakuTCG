@@ -6,12 +6,12 @@ export interface IUserProfile extends Document {
     xp: number;
     level: number;
     ownedCards: {
-        cardId: string;
+        cardId: any;
         count: number;
         obtainedAt: Date;
     }[];
     inventoryPacks: {
-        packId: string;
+        packId: any;
         count: number;
         obtainedAt: Date;
     }[];

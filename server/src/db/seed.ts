@@ -8,70 +8,89 @@ const initialCards = [
         overall: 89,
         rarity: "legendary",
         imageUrl: "gojo.gif",
-        weight: 1, // Multiplier within legendary
+        weight: 1,
         attributes: {
-            attack: 94,
-            defense: 82,
-            speed: 88,
-            intelligence: 85,
-            health: 90,
-            energy: 86
+            attack: 94, defense: 82, speed: 88, intelligence: 85, health: 90, energy: 86
+        }
+    },
+    {
+        name: "Itadori Yuji",
+        overall: 82,
+        rarity: "rare",
+        imageUrl: "https://us.oricon-group.com/upimg/detail/2000/2833/img660/yuji-itadori-jjk-EP32%20(10).jpg",
+        weight: 1.5,
+        attributes: {
+            attack: 85, defense: 80, speed: 82, intelligence: 70, health: 88, energy: 84
+        }
+    },
+    {
+        name: "Tanjiro Kamado",
+        overall: 80,
+        rarity: "rare",
+        imageUrl: "https://static0.srcdn.com/wordpress/wp-content/uploads/2025/09/tanjiro-kamado-from-demon-slayer-infinity-castle-movie.jpg",
+        weight: 1.5,
+        attributes: {
+            attack: 82, defense: 78, speed: 84, intelligence: 75, health: 85, energy: 80
         }
     },
     {
         name: "Levi Ackerman",
+        overall: 88,
+        rarity: "epic",
+        imageUrl: "https://static.wikia.nocookie.net/shingekinokyojin/images/0/0a/Levi_Ackermann_%28Anime%29_character_image_%28854%29.png/revision/latest?cb=20231106070611",
+        weight: 1,
+        attributes: {
+            attack: 92, defense: 85, speed: 80, intelligence: 82, health: 94, energy: 88
+        }
+    },
+    {
+        name: "Eren Yeager",
         overall: 85,
         rarity: "epic",
         imageUrl: "https://framerusercontent.com/images/wPUUFSxql4UyBvz6Yxj3iju3X0.jpeg?width=2400&height=1440",
         weight: 1,
         attributes: {
-            attack: 88,
-            defense: 75,
-            speed: 95,
-            intelligence: 90,
-            health: 82,
-            energy: 88
+            attack: 88, defense: 75, speed: 95, intelligence: 90, health: 82, energy: 88
         }
     },
     {
         name: "Guts",
         overall: 92,
         rarity: "rare",
-        imageUrl: "https://framerusercontent.com/images/wPUUFSxql4UyBvz6Yxj3iju3X0.jpeg?width=2400&height=1440",
+        imageUrl: "https://preview.redd.it/its-fanart-but-i-find-this-picture-of-guts-incredibly-v0-4bqhih6hof7a1.jpg?width=640&crop=smart&auto=webp&s=cbf4cacb2ec18d10835d6a519168a647e8a54a86",
         weight: 1,
         attributes: {
-            attack: 96,
-            defense: 94,
-            speed: 70,
-            intelligence: 80,
-            health: 98,
-            energy: 85
+            attack: 96, defense: 94, speed: 70, intelligence: 80, health: 98, energy: 85
         }
     },
     {
         name: "Rock Lee",
         overall: 78,
         rarity: "common",
-        imageUrl: "https://framerusercontent.com/images/wPUUFSxql4UyBvz6Yxj3iju3X0.jpeg?width=2400&height=1440",
+        imageUrl: "https://static.wikia.nocookie.net/naruto/images/9/97/Rock_Lee_Part_I.png/revision/latest/scale-to-width-down/1200?cb=20181229065526",
         weight: 1,
         attributes: {
-            attack: 84,
-            defense: 70,
-            speed: 92,
-            intelligence: 65,
-            health: 80,
-            energy: 75
+            attack: 84, defense: 70, speed: 92, intelligence: 65, health: 80, energy: 75
         }
     }
 ];
 
 export async function seedDatabase() {
     try {
+        const cardCount = await Card.countDocuments();
+        const packCount = await Pack.countDocuments();
+
+        // If we have at least 6 packs, we assume we're good.
+        if (cardCount >= initialCards.length && packCount >= 6) {
+            console.log("Database already seeded with enough items, skipping...");
+            return;
+        }
+
+        console.log("Seeding database with new cards and packs...");
         await Card.deleteMany({});
         await Pack.deleteMany({});
 
         const seededCards = await Card.insertMany(initialCards);
-        console.log("Cards seeded with scoped rarity multipliers");
 
         const packSpecs = [
             {
@@ -86,9 +105,33 @@ export async function seedDatabase() {
                 name: "Sorcery Unleashed",
                 description: "High risk, high reward. Specialized in powerful cursed energy cards.",
                 price: 1200,
-                imageUrl: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000&auto=format&fit=crop",
+                imageUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop",
                 accentColor: "purple",
                 cardDocs: seededCards.filter(c => ["legendary", "epic", "rare"].includes(c.rarity))
+            },
+            {
+                name: "Uprising Storm",
+                description: "Feel the power of the titans and the scouts. High mobility warriors.",
+                price: 1500,
+                imageUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop",
+                accentColor: "amber",
+                cardDocs: seededCards.filter(c => c.name.includes("Eren") || c.name.includes("Levi") || c.rarity === "common")
+            },
+            {
+                name: "Demon Slayer Pack",
+                description: "Master the breathing techniques with Tanjiro and others.",
+                price: 800,
+                imageUrl: "https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=1000&auto=format&fit=crop",
+                accentColor: "blue",
+                cardDocs: seededCards.filter(c => c.name.includes("Tanjiro") || c.rarity === "common")
+            },
+            {
+                name: "Cursed Kings",
+                description: "The most powerful sorcerers and spirits gathered in one place.",
+                price: 3000,
+                imageUrl: "https://images.unsplash.com/photo-1626544823105-db93a58a683a?q=80&w=1000&auto=format&fit=crop",
+                accentColor: "purple",
+                cardDocs: seededCards.filter(c => ["legendary", "epic"].includes(c.rarity))
             },
             {
                 name: "Godlike Artifacts",

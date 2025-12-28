@@ -40,3 +40,20 @@ export const calculatePackProbabilities = (cards: any[]) => {
             color: data.color
         }));
 };
+
+export const drawCardFromPack = (cards: any[]) => {
+    const totalWeight = cards.reduce((sum: number, c: any) =>
+        sum + getEffectiveWeight(c.rarity, c.weight || 1), 0);
+
+    let random = Math.random() * totalWeight;
+
+    for (const card of cards) {
+        const cardWeight = getEffectiveWeight(card.rarity, card.weight || 1);
+        if (random < cardWeight) {
+            return card;
+        }
+        random -= cardWeight;
+    }
+
+    return cards[0]; // Fallback
+};
