@@ -20,6 +20,7 @@ import { motion } from "motion/react";
 import { useUserStore } from "@/store/useUserStore";
 import { PackOpeningOverlay } from "../../components/PackOpeningOverlay";
 import { IPack } from "@/types/pack";
+import { BuyCoinsDialog } from "@/components/buy-coins-dialog";
 
 export default function ProfilePage() {
   const { data: session, isPending: sessionPending } = authClient.useSession();
@@ -33,10 +34,10 @@ export default function ProfilePage() {
       return;
     }
 
-    if (session && !profile) {
+    if (session) {
       fetchProfile();
     }
-  }, [session, sessionPending, profile, fetchProfile]);
+  }, [session, sessionPending, fetchProfile]);
 
   const handleOpenPack = (pack: IPack) => {
     setSelectedPack(pack);
@@ -122,12 +123,14 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl flex items-center justify-center p-2 shadow-2xl gap-2 min-w-30">
-                <Coins className="w-6 h-6 text-amber-500" />
-                <span className="text-2xl font-black">
-                  {profile?.balance || 0}
-                </span>
-              </div>
+              <BuyCoinsDialog>
+                <div className="bg-white/5 backdrop-blur-2xl border border-white/10 cursor-pointer rounded-3xl flex items-center justify-center p-2 shadow-2xl gap-2 min-w-30">
+                  <Coins className="w-6 h-6 text-amber-500" />
+                  <span className="text-2xl font-black">
+                    {profile?.balance || 0}
+                  </span>
+                </div>
+              </BuyCoinsDialog>
               <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl flex items-center justify-center p-2 shadow-2xl gap-2">
                 <Trophy className="w-6 h-6 text-purple-500" />
                 <span className="text-2xl font-black">

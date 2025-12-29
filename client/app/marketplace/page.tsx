@@ -4,12 +4,23 @@ import { useState, useEffect } from "react";
 import { getPacks, IPack } from "@/api/marketplace";
 import { CardPack } from "../../components/CardPack";
 import { ThemeToggle } from "../../components/theme-toggle";
-import { Sparkles, Compass, Search, Filter } from "lucide-react";
+import { Sparkles, Compass, Search, Filter, Coins } from "lucide-react";
 import { FeaturedBundle } from "@/components/featured-bundle";
+import { BuyCoinsDialog } from "@/components/buy-coins-dialog";
+import { useUserStore } from "@/store/useUserStore";
+import { authClient } from "@/lib/auth-client";
 
 export default function ExplorePage() {
   const [packs, setPacks] = useState<IPack[]>([]);
   const [loading, setLoading] = useState(true);
+  const { data: session } = authClient.useSession();
+  const { profile, fetchProfile } = useUserStore();
+
+  useEffect(() => {
+    if (session) {
+      fetchProfile();
+    }
+  }, [session, fetchProfile]);
 
   useEffect(() => {
     getPacks()
@@ -53,6 +64,11 @@ export default function ExplorePage() {
           <button className="p-2 border border-border rounded-xl hover:bg-muted transition-colors">
             <Filter className="w-5 h-5" />
           </button>
+          <BuyCoinsDialog>
+            <button className="p-2 border border-border rounded-xl hover:bg-muted transition-colors flex items-center gap-2">
+              <Coins className="w-5 h-5 text-yellow-500" /> {profile?.balance}
+            </button>
+          </BuyCoinsDialog>
         </div>
       </header>
 

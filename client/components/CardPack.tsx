@@ -16,16 +16,15 @@ interface CardPackProps {
 
 export function CardPack({ pack, variant = 'marketplace', onOpen }: CardPackProps) {
     const [isBuying, setIsBuying] = useState(false);
-    const { updateBalance } = useUserStore();
+    const { updateBalance, fetchProfile } = useUserStore();
 
     const handleBuy = async () => {
         setIsBuying(true);
         try {
             const res = await buyPack(pack._id);
             updateBalance(res.balance);
+            await fetchProfile(); // Update inventory
             toast.success(`Purchased ${pack.name}! New balance: ${res.balance}`);
-            // Force a refresh of the profile/navbar balance if possible, 
-            // but for now the user will see it on manual refresh or next action.
         } catch (error: any) {
             toast.error(error.response?.data?.error || "Failed to purchase pack");
         } finally {

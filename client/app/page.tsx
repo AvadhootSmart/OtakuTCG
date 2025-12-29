@@ -2,202 +2,243 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Play, Users, Package } from "lucide-react";
+import { Play, Package, User, Trophy, Sparkles, LogIn, UserPlus, LogOut, List, Coins } from "lucide-react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
+import { authClient } from "@/lib/auth-client";
+import { useUserStore } from "@/store/useUserStore";
+import { AuthDialog } from "@/components/auth-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+interface MenuItem {
+  icon: any;
+  label: string;
+  href?: string;
+  primary?: boolean;
+  danger?: boolean;
+  isAuth?: boolean;
+  onClick?: () => void;
+}
 
 export default function Home() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { data: session } = authClient.useSession();
+  const { profile, fetchProfile } = useUserStore();
 
   useEffect(() => {
-    setIsVisible(true);
-  }, []);
+    setMounted(true);
+    if (session) {
+      fetchProfile();
+    }
+  }, [session, fetchProfile]);
+
+  if (!mounted) return null;
+
+  const authenticatedMenuItems: MenuItem[] = [
+    { icon: Play, label: "PLAY VS AI", href: "/play", primary: true },
+    { icon: Trophy, label: "MATCHMAKING", href: "/matchmaking" },
+    { icon: Package, label: "MARKETPLACE", href: "/marketplace" },
+    { icon: User, label: "COLLECTION", href: "/profile" },
+    { icon: List, label: "SHOWCASE", href: "/showcase" },
+    { icon: LogOut, label: "LOGOUT", onClick: () => authClient.signOut(), danger: true },
+  ];
+
+  const guestMenuItems: MenuItem[] = [
+    { icon: LogIn, label: "SIGN IN", isAuth: true, primary: true },
+    { icon: Package, label: "MARKETPLACE", href: "/marketplace" },
+    { icon: UserPlus, label: "CREATE ACCOUNT", isAuth: true },
+    { icon: Sparkles, label: "VIEW CARDS", href: "/showcase" },
+  ];
+
+  const menuItems = session ? authenticatedMenuItems : guestMenuItems;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section id="hero" className="px-6 py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <div
-            className={`transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
-          >
-            <h1 className="text-5xl md:text-7xl rock-salt text-foreground mb-8 leading-tight">
-              Anime Trading
-              <br />
-              Card Game
-            </h1>
-            <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-              Embark on an epic journey through the world of anime. Collect,
-              battle, and become the ultimate champion.
-            </p>
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#050505] flex items-center justify-center">
+      <div className="absolute bottom-10 right-10 z-10">
+        <ThemeToggle />
+      </div>
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse delay-700" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(120,0,255,0.05)_0%,transparent_70%)]" />
+      </div>
 
-            {/* Call to Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Button
-                size="lg"
-                className="bg-foreground text-background hover:bg-muted-foreground px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Play vs AI
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-border text-foreground hover:bg-muted px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300"
-              >
-                <Users className="w-5 h-5 mr-2" />
-                Play vs Human
-              </Button>
-              <Link href="/marketplace">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-border text-foreground hover:bg-muted px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300"
+      {/* Grid Pattern overlay */}
+      <div className="absolute inset-0 z-[1] opacity-20"
+        style={{ backgroundImage: 'radial-gradient(circle, #333 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+      <div className="container relative z-10 flex flex-col md:flex-row items-center justify-between gap-12 px-6">
+        {/* Left Side: Game Title & Logo */}
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="flex flex-col items-start space-y-4 max-w-xl"
+        >
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-blue-400 text-sm font-medium">
+            <Sparkles className="w-4 h-4" />
+            <span>SEASON 1: AWAKENING</span>
+          </div>
+
+          <h1 className="text-6xl md:text-8xl rock-salt text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-blue-400 leading-tight  drop-shadow-[0_0_30px_rgba(168,85,247,0.4)]">
+            OTAKU<br />TCG
+          </h1>
+
+          <p className="text-lg text-zinc-400 max-w-md border-l-2 border-blue-500/50 pl-4 py-2 italic font-light text-wrap">
+            "In this world, every card tells a story, and every battle defines your destiny."
+          </p>
+
+          <div className="pt-8 flex items-center space-x-6 text-zinc-300">
+            <div className="flex flex-col">
+              <span className="text-xs text-zinc-500 uppercase tracking-widest mb-1 font-bold">Status</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm font-mono tracking-tighter">CONNECTED TO REALM</span>
+              </div>
+            </div>
+            <div className="h-8 w-px bg-zinc-800" />
+            <div className="flex flex-col">
+              <span className="text-xs text-zinc-500 uppercase tracking-widest mb-1 font-bold">Latency</span>
+              <span className="text-sm font-mono tracking-tighter">24ms</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Right Side: Vertical Menu */}
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+          className="w-full max-w-sm"
+        >
+          <nav className="flex flex-col space-y-3">
+            {menuItems.map((item, index) => {
+              const content = (
+                <motion.div
+                  whileHover={{ x: 10 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={item.onClick}
+                  className={`relative flex items-center justify-between p-4 rounded-xl border transition-all duration-300 overflow-hidden cursor-pointer ${item.primary
+                    ? "bg-gradient-to-r from-blue-600 to-blue-300 border-white/20 shadow-[0_0_20px_rgba(168,85,247,0.3)]"
+                    : item.danger
+                      ? "bg-red-500/5 border-red-500/20 hover:bg-red-500/10 hover:border-red-500/30 group"
+                      : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 group"
+                    }`}
                 >
-                  <Package className="w-5 h-5 mr-2" />
-                  Explore Packs
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+                  <div className="flex items-center space-x-4 relative z-10">
+                    <item.icon className={`w-5 h-5 ${item.primary ? "text-white" : item.danger ? "text-red-400" : "text-purple-400"}`} />
+                    <span className={`text-lg font-bold tracking-tighter ${item.primary ? "text-white" : item.danger ? "text-red-200" : "text-zinc-200"}`}>
+                      {item.label}
+                    </span>
+                  </div>
 
-      {/* Features Section */}
-      <section id="features" className="px-6 py-20 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl rock-salt text-foreground mb-6">
-              Epic Features
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Discover what makes OtakuTCG the ultimate anime trading card
-              experience
-            </p>
-          </div>
+                  {/* Decorative Elements for Menu Item */}
+                  <div className={`absolute right-[-20%] bottom-[-50%] w-32 h-32 rounded-full blur-2xl transition-transform group-hover:scale-150 ${item.danger ? "bg-red-500/10" : "bg-white/5"}`} />
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="bg-card border-border hover:border-foreground/20 transition-all duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-foreground rounded-lg flex items-center justify-center mb-4">
-                  <Play className="w-6 h-6 text-background" />
-                </div>
-                <CardTitle className="text-xl text-foreground">
-                  AI Battles
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Challenge our advanced AI opponents with adaptive difficulty
-                  levels
-                </CardDescription>
-              </CardHeader>
-            </Card>
+                  {item.primary && (
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                      animate={{ x: ['-100%', '200%'] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    />
+                  )}
+                </motion.div>
+              );
 
-            <Card className="bg-card border-border hover:border-foreground/20 transition-all duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-foreground rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-background" />
-                </div>
-                <CardTitle className="text-xl text-foreground">
-                  Multiplayer
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Battle friends and players worldwide in real-time matches
-                </CardDescription>
-              </CardHeader>
-            </Card>
+              if (item.isAuth) {
+                return <AuthDialog key={item.label}>{content}</AuthDialog>;
+              }
 
-            <Card className="bg-card border-border hover:border-foreground/20 transition-all duration-300">
-              <CardHeader>
-                <div className="w-12 h-12 bg-foreground rounded-lg flex items-center justify-center mb-4">
-                  <Package className="w-6 h-6 text-background" />
-                </div>
-                <CardTitle className="text-xl text-foreground">
-                  Card Collection
-                </CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Collect rare and legendary cards from your favorite anime
-                  series
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </section>
+              if (item.href) {
+                return (
+                  <Link key={item.label} href={item.href}>
+                    {content}
+                  </Link>
+                );
+              }
 
-      {/* Stats Section */}
-      <section className="px-6 py-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            <div className="bg-card border border-border rounded-lg p-8">
-              <div className="text-3xl font-bold text-foreground mb-2">
-                1000+
-              </div>
-              <div className="text-muted-foreground">Unique Cards</div>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-8">
-              <div className="text-3xl font-bold text-foreground mb-2">50+</div>
-              <div className="text-muted-foreground">Anime Series</div>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-8">
-              <div className="text-3xl font-bold text-foreground mb-2">
-                10K+
-              </div>
-              <div className="text-muted-foreground">Active Players</div>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-8">
-              <div className="text-3xl font-bold text-foreground mb-2">
-                24/7
-              </div>
-              <div className="text-muted-foreground">Game Availability</div>
-            </div>
-          </div>
-        </div>
-      </section>
+              return <div key={item.label}>{content}</div>;
+            })}
+          </nav>
 
-      {/* Final CTA Section */}
-      <section id="cta" className="px-6 py-20 bg-muted/30">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl rock-salt text-foreground mb-6">
-            Ready to Begin Your Adventure?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-12">
-            Join thousands of players in the ultimate anime trading card
-            experience
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-foreground text-background hover:bg-muted-foreground px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Start Playing Now
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-2 border-border text-foreground hover:bg-muted px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300"
-            >
-              <Package className="w-5 h-5 mr-2" />
-              View Card Gallery
-            </Button>
-          </div>
-        </div>
-      </section>
+          {/* User Preview / Info Box */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-zinc-900/50 to-black/50 border border-white/5 backdrop-blur-sm"
+          >
+            <AnimatePresence mode="wait">
+              {session && profile ? (
+                <motion.div
+                  key="user-box"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Player Identity</span>
+                    <div className="flex items-center space-x-2 text-yellow-500">
+                      <Coins className="w-3 h-3" />
+                      <span className="text-xs font-bold">{profile.balance}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center font-bold text-white shadow-lg">
+                      {session.user.name?.[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-white font-bold tracking-tight leading-none mb-1">{session.user.name}</div>
+                      <div className="text-[10px] text-zinc-500 uppercase tracking-tighter">Level 1 Novice</div>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="guest-box"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-2"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-zinc-500 uppercase tracking-tighter font-bold">Briefing</span>
+                    <span className="text-[10px] text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded font-bold">TUTORIAL</span>
+                  </div>
+                  <p className="text-sm text-zinc-300 leading-relaxed font-light italic">
+                    "New to the arena? Sign in to claim your starter pack and begin your journey."
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </motion.div>
+      </div>
 
-      {/* Footer */}
-      <footer className="px-6 py-8 border-t border-border">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-muted-foreground">
-            © 2024 OtakuTCG. All rights reserved. | Made with ❤️ for anime fans
-          </p>
-        </div>
-      </footer>
+      {/* Floating Decorative Cards */}
+      <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
+        <motion.div
+          animate={{
+            y: [0, -20, 0],
+            rotate: [12, 15, 12],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute -bottom-24 -left-12 w-64 h-96 bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-white/10 rounded-2xl backdrop-blur-md rotate-12"
+        />
+
+        <motion.div
+          animate={{
+            y: [0, 20, 0],
+            rotate: [-8, -12, -8],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute -top-12 -right-12 w-48 h-72 bg-gradient-to-br from-pink-500/20 to-orange-500/20 border border-white/10 rounded-2xl backdrop-blur-md -rotate-12"
+        />
+      </div>
     </div>
   );
 }

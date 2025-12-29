@@ -1,16 +1,19 @@
 export interface ICard {
     _id: string;
     name: string;
-    anime: string;
-    rarity: string;
-    type: string;
-    attribute: string;
-    level: number;
-    atk: number;
-    def: number;
-    description: string;
+    overall: number;
+    rarity: "common" | "rare" | "epic" | "legendary";
     imageUrl: string;
+    attributes: {
+        attack: number;
+        defense: number;
+        speed: number;
+        intelligence: number;
+        health: number;
+        energy: number;
+    };
     weight: number;
     createdAt: string;
     updatedAt: string;
 }
+
