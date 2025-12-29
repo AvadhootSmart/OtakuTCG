@@ -32,9 +32,38 @@ router.post("/", async (req, res) => {
         if (!session) return res.status(401).json({ error: "Unauthorized" });
 
         const card = await Card.create(req.body);
-        res.status(21).json(card);
+        res.status(201).json(card);
     } catch (error) {
         res.status(400).json({ error: "Failed to create card" });
+    }
+});
+
+// Create multiple cards in a single request
+router.post("/bulk", async (req, res) => {
+    try {
+        const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
+        if (!session) return res.status(401).json({ error: "Unauthorized" });
+
+        const { cards } = req.body;
+
+        // Validate that cards is an array
+        if (!Array.isArray(cards)) {
+            return res.status(400).json({ error: "Request body must contain a 'cards' array" });
+        }
+
+        if (cards.length === 0) {
+            return res.status(400).json({ error: "Cards array cannot be empty" });
+        }
+
+        // Create all cards at once using insertMany for better performance
+        const createdCards = await Card.insertMany(cards);
+
+        res.status(201).json({
+            message: `Successfully created ${createdCards.length} cards`,
+            cards: createdCards
+        });
+    } catch (error) {
+        res.status(400).json({ error: "Failed to create cards" });
     }
 });
 

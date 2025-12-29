@@ -11,7 +11,17 @@ const router = Router();
 router.get("/", async (req, res) => {
     try {
         const packs = await Pack.find().populate("cards");
-        res.json(packs);
+
+        // Recalculate probabilities on-the-fly based on current RARITY_WEIGHTS
+        const packsWithCurrentProbabilities = packs.map(pack => {
+            const packObj = pack.toObject();
+            if (packObj.cards && packObj.cards.length > 0) {
+                packObj.probabilities = calculatePackProbabilities(packObj.cards as ICard[]);
+            }
+            return packObj;
+        });
+
+        res.json(packsWithCurrentProbabilities);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch packs" });
     }
@@ -22,7 +32,14 @@ router.get("/:id", async (req, res) => {
     try {
         const pack = await Pack.findById(req.params.id).populate("cards");
         if (!pack) return res.status(404).json({ error: "Pack not found" });
-        res.json(pack);
+
+        // Recalculate probabilities on-the-fly based on current RARITY_WEIGHTS
+        const packObj = pack.toObject();
+        if (packObj.cards && packObj.cards.length > 0) {
+            packObj.probabilities = calculatePackProbabilities(packObj.cards as ICard[]);
+        }
+
+        res.json(packObj);
     } catch (error) {
         res.status(500).json({ error: "Failed to fetch pack" });
     }
@@ -161,6 +178,42 @@ router.post("/open/:id", async (req, res) => {
     } catch (error) {
         console.error("Open pack error:", error);
         res.status(500).json({ error: "Failed to open pack" });
+    }
+});
+
+// Recalculate probabilities for all packs (Admin only)
+// Use this when RARITY_WEIGHTS are changed to update all existing packs
+router.post("/recalculate-probabilities", async (req, res) => {
+    try {
+        const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
+        if (!session) return res.status(401).json({ error: "Unauthorized" });
+
+        // Get all packs
+        const packs = await Pack.find().populate("cards");
+
+        let updatedCount = 0;
+        const updates = [];
+
+        for (const pack of packs) {
+            if (pack.cards && pack.cards.length > 0) {
+                const newProbabilities = calculatePackProbabilities(pack.cards as ICard[]);
+
+                // Update the pack with new probabilities
+                pack.probabilities = newProbabilities;
+                updates.push(pack.save());
+                updatedCount++;
+            }
+        }
+
+        await Promise.all(updates);
+
+        res.json({
+            message: `Successfully recalculated probabilities for ${updatedCount} packs`,
+            updatedCount
+        });
+    } catch (error) {
+        console.error("Recalculate probabilities error:", error);
+        res.status(500).json({ error: "Failed to recalculate probabilities" });
     }
 });
 

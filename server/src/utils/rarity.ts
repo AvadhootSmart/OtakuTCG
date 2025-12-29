@@ -1,8 +1,8 @@
 export const RARITY_WEIGHTS = {
-    common: 100,
+    common: 50,
     rare: 25,
     epic: 8,
-    legendary: 1
+    legendary: 50
 } as const;
 
 export type RarityType = keyof typeof RARITY_WEIGHTS;

@@ -84,7 +84,7 @@ export function TradingCard({
             {/* Character Image - Now starts from the very top */}
             <div className="absolute top-0 left-0 w-full h-[70%] z-0">
                 <Image
-                    src={imageUrl}
+                    src={imageUrl ? imageUrl : "https://framerusercontent.com/images/wPUUFSxql4UyBvz6Yxj3iju3X0.jpeg?width=2400&height=1440"}
                     alt={name}
                     fill
                     className="w-full h-full object-cover object-top filter contrast-110 brightness-110 group-hover:scale-105 transition-transform duration-700"

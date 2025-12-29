@@ -9,10 +9,12 @@ import { AuthDialog } from "./auth-dialog";
 import { authClient } from "@/lib/auth-client";
 import { useUserStore } from "@/store/useUserStore";
 import { BuyCoinsDialog } from "./buy-coins-dialog";
+import { usePathname } from "next/navigation";
 
 export function Navbar() {
     const { data: session } = authClient.useSession();
     const { profile, fetchProfile, setProfile } = useUserStore();
+    const pathname = usePathname();
 
     useEffect(() => {
         if (session) {
@@ -21,6 +23,8 @@ export function Navbar() {
             setProfile(null);
         }
     }, [session, fetchProfile, setProfile]);
+
+    if (pathname === "/" || pathname === "/showcase" || pathname === "/marketplace" || pathname === "/profile") return null;
 
     return (
         <nav className="px-6 py-6 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
