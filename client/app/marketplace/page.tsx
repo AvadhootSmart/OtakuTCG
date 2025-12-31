@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getPacks, IPack } from "@/api/marketplace";
+import { getPacks } from "@/api/marketplace";
 import { CardPack } from "../../components/CardPack";
 import { ThemeToggle } from "../../components/theme-toggle";
 import { Sparkles, Compass, Search, Filter, Coins } from "lucide-react";
@@ -9,6 +9,7 @@ import { FeaturedBundle } from "@/components/featured-bundle";
 import { BuyCoinsDialog } from "@/components/buy-coins-dialog";
 import { useUserStore } from "@/store/useUserStore";
 import { authClient } from "@/lib/auth-client";
+import { IPack } from "@/types/pack";
 
 export default function ExplorePage() {
   const [packs, setPacks] = useState<IPack[]>([]);

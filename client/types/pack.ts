@@ -6,8 +6,9 @@ export interface IPack {
     description: string;
     price: number;
     imageUrl: string;
+    accentColor: string;
     cards: string[] | ICard[];
-    probabilities?: {
+    rarity?: {
         common: number;
         rare: number;
         epic: number;

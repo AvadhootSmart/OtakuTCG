@@ -68,19 +68,28 @@ export function CardPack({ pack, variant = 'marketplace', onOpen }: CardPackProp
                     </div>
 
                     {/* Odds Section - Small Rounded Card */}
-                    {pack.probabilities && pack.probabilities.length > 0 && (
+                    {pack.rarity && (
                         <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Drop Rates</p>
                             <div className="grid grid-cols-2 gap-2">
-                                {pack.probabilities.map((prob: any, idx: number) => (
-                                    <div key={idx} className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: prob.color }} />
-                                            <span className="text-[9px] font-black uppercase tracking-tight opacity-70">{prob.rarity}</span>
+                                {Object.entries(pack.rarity).map(([rarity, chance], idx) => {
+                                    const color = {
+                                        common: "#9CA3AF",
+                                        rare: "#3B82F6",
+                                        epic: "#A855F7",
+                                        legendary: "#EAB308"
+                                    }[rarity] || "#FFFFFF";
+
+                                    return (
+                                        <div key={idx} className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                                                <span className="text-[9px] font-black uppercase tracking-tight opacity-70">{rarity}</span>
+                                            </div>
+                                            <span className="text-[10px] font-black">{chance}%</span>
                                         </div>
-                                        <span className="text-[10px] font-black">{prob.chance}%</span>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
