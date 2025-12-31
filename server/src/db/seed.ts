@@ -10,7 +10,7 @@ const initialCards = [
         imageUrl: "gojo.gif",
         weight: 1,
         attributes: {
-            attack: 94, defense: 82, speed: 88, intelligence: 85, health: 90, energy: 86
+            attack: 94, defense: 82, speed: 88, intelligence: 85
         }
     },
     {
@@ -20,7 +20,7 @@ const initialCards = [
         imageUrl: "https://us.oricon-group.com/upimg/detail/2000/2833/img660/yuji-itadori-jjk-EP32%20(10).jpg",
         weight: 1.5,
         attributes: {
-            attack: 85, defense: 80, speed: 82, intelligence: 70, health: 88, energy: 84
+            attack: 85, defense: 80, speed: 82, intelligence: 70
         }
     },
     {
@@ -30,7 +30,7 @@ const initialCards = [
         imageUrl: "https://static0.srcdn.com/wordpress/wp-content/uploads/2025/09/tanjiro-kamado-from-demon-slayer-infinity-castle-movie.jpg",
         weight: 1.5,
         attributes: {
-            attack: 82, defense: 78, speed: 84, intelligence: 75, health: 85, energy: 80
+            attack: 82, defense: 78, speed: 84, intelligence: 75
         }
     },
     {
@@ -40,7 +40,7 @@ const initialCards = [
         imageUrl: "https://static.wikia.nocookie.net/shingekinokyojin/images/0/0a/Levi_Ackermann_%28Anime%29_character_image_%28854%29.png/revision/latest?cb=20231106070611",
         weight: 1,
         attributes: {
-            attack: 92, defense: 85, speed: 80, intelligence: 82, health: 94, energy: 88
+            attack: 92, defense: 85, speed: 80, intelligence: 82
         }
     },
     {
@@ -50,7 +50,7 @@ const initialCards = [
         imageUrl: "https://framerusercontent.com/images/wPUUFSxql4UyBvz6Yxj3iju3X0.jpeg?width=2400&height=1440",
         weight: 1,
         attributes: {
-            attack: 88, defense: 75, speed: 95, intelligence: 90, health: 82, energy: 88
+            attack: 88, defense: 75, speed: 95, intelligence: 90
         }
     },
     {
@@ -60,7 +60,7 @@ const initialCards = [
         imageUrl: "https://preview.redd.it/its-fanart-but-i-find-this-picture-of-guts-incredibly-v0-4bqhih6hof7a1.jpg?width=640&crop=smart&auto=webp&s=cbf4cacb2ec18d10835d6a519168a647e8a54a86",
         weight: 1,
         attributes: {
-            attack: 96, defense: 94, speed: 70, intelligence: 80, health: 98, energy: 85
+            attack: 96, defense: 94, speed: 70, intelligence: 80
         }
     },
     {
@@ -70,7 +70,7 @@ const initialCards = [
         imageUrl: "https://static.wikia.nocookie.net/naruto/images/9/97/Rock_Lee_Part_I.png/revision/latest/scale-to-width-down/1200?cb=20181229065526",
         weight: 1,
         attributes: {
-            attack: 84, defense: 70, speed: 92, intelligence: 65, health: 80, energy: 75
+            attack: 84, defense: 70, speed: 92, intelligence: 65
         }
     }
 ];

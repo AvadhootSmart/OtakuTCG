@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { authClient } from "@/lib/auth-client";
 import { useUserStore } from "@/store/useUserStore";
 import { AuthDialog } from "@/components/auth-dialog";
+import { GameModeDialog } from "@/components/game-mode-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface MenuItem {
@@ -17,6 +18,7 @@ interface MenuItem {
   primary?: boolean;
   danger?: boolean;
   isAuth?: boolean;
+  isGameMode?: boolean;
   onClick?: () => void;
 }
 
@@ -35,7 +37,7 @@ export default function Home() {
   if (!mounted) return null;
 
   const authenticatedMenuItems: MenuItem[] = [
-    { icon: Play, label: "PLAY VS AI", href: "/play", primary: true },
+    { icon: Play, label: "PLAY VS AI", isGameMode: true, primary: true },
     { icon: Trophy, label: "MATCHMAKING", href: "/matchmaking" },
     { icon: Package, label: "MARKETPLACE", href: "/marketplace" },
     { icon: User, label: "COLLECTION", href: "/profile" },
@@ -81,7 +83,7 @@ export default function Home() {
             <span>SEASON 1: AWAKENING</span>
           </div>
 
-          <h1 className="text-6xl md:text-8xl rock-salt text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-blue-400 leading-tight  drop-shadow-[0_0_30px_rgba(168,85,247,0.4)]">
+          <h1 className="text-6xl md:text-8xl rock-salt text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-blue-400 leading-[1.5]  drop-shadow-[0_0_30px_rgba(168,85,247,0.4)]">
             OTAKU<br />TCG
           </h1>
 
@@ -148,6 +150,10 @@ export default function Home() {
 
               if (item.isAuth) {
                 return <AuthDialog key={item.label}>{content}</AuthDialog>;
+              }
+
+              if (item.isGameMode) {
+                return <GameModeDialog key={item.label}>{content}</GameModeDialog>;
               }
 
               if (item.href) {

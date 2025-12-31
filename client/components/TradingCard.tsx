@@ -8,8 +8,6 @@ export interface CardAttributes {
     defense: number;
     speed: number;
     intelligence: number;
-    health: number;
-    energy: number;
 }
 
 export interface TradingCardProps {
@@ -28,9 +26,7 @@ export function TradingCard({
         attack: 85,
         defense: 72,
         speed: 78,
-        intelligence: 82,
-        health: 88,
-        energy: 75
+        intelligence: 82
     },
     imageUrl = "https://framerusercontent.com/images/wPUUFSxql4UyBvz6Yxj3iju3X0.jpeg?width=2400&height=1440",
     rarity = "legendary",
@@ -113,9 +109,9 @@ export function TradingCard({
                         { label: "ATK", val: attributes.attack },
                         { label: "INT", val: attributes.intelligence },
                         { label: "DEF", val: attributes.defense },
-                        { label: "HP", val: attributes.health },
                         { label: "SPD", val: attributes.speed },
-                        { label: "ENG", val: attributes.energy }
+                        { label: "HP", val: 100 },
+                        { label: "ENG", val: 100 }
                     ].map((stat) => (
                         <div key={stat.label} className="flex justify-between items-center group/stat">
                             <span className={`text-[10px] font-black uppercase tracking-wider opacity-70 ${style.text}`}>{stat.label}</span>

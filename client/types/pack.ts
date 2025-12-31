@@ -1,19 +1,18 @@
-export interface IPackProbability {
-    rarity: string;
-    chance: number;
-    color: string;
-}
+import { ICard } from "./card";
 
 export interface IPack {
     _id: string;
-    id?: string; // For compatibility
     name: string;
     description: string;
     price: number;
     imageUrl: string;
-    accentColor: string;
-    probabilities: IPackProbability[];
-    cards: string[];
+    cards: string[] | ICard[];
+    probabilities?: {
+        common: number;
+        rare: number;
+        epic: number;
+        legendary: number;
+    };
     createdAt: string;
     updatedAt: string;
 }

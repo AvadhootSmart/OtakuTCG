@@ -10,8 +10,6 @@ export interface ICard extends Document {
         defense: number;
         speed: number;
         intelligence: number;
-        health: number;
-        energy: number;
     };
     weight: number;
     createdAt: Date;
@@ -31,9 +29,7 @@ const CardSchema = new Schema<ICard>({
         attack: { type: Number, required: true },
         defense: { type: Number, required: true },
         speed: { type: Number, required: true },
-        intelligence: { type: Number, required: true },
-        health: { type: Number, required: true },
-        energy: { type: Number, required: true }
+        intelligence: { type: Number, required: true }
     },
     weight: { type: Number, default: 100 }
 }, { timestamps: true });

@@ -12,8 +12,6 @@ export const cards: TradingCardProps[] = [
             defense: 82,
             speed: 88,
             intelligence: 85,
-            health: 90,
-            energy: 86
         }
     },
     {
@@ -27,8 +25,6 @@ export const cards: TradingCardProps[] = [
             defense: 75,
             speed: 95,
             intelligence: 90,
-            health: 82,
-            energy: 88
         }
     },
     {
@@ -42,8 +38,6 @@ export const cards: TradingCardProps[] = [
             defense: 94,
             speed: 70,
             intelligence: 80,
-            health: 98,
-            energy: 85
         }
     },
     {
@@ -57,8 +51,6 @@ export const cards: TradingCardProps[] = [
             defense: 70,
             speed: 92,
             intelligence: 65,
-            health: 80,
-            energy: 75
         }
     }
 ];

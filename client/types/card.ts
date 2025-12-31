@@ -9,8 +9,6 @@ export interface ICard {
         defense: number;
         speed: number;
         intelligence: number;
-        health: number;
-        energy: number;
     };
     weight: number;
     createdAt: string;
