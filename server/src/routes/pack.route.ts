@@ -59,7 +59,7 @@ router.post("/", async (req, res) => {
         const pack = await Pack.create(req.body);
         res.status(201).json(pack);
     } catch (error) {
-        res.status(400).json({ error: "Failed to create pack" });
+        res.status(400).json({ error: "Failed to create pack", message: error });
     }
 });
 
