@@ -1,6 +1,6 @@
-import { Card } from "../models/Card.model";
-import { Pack } from "../models/Pack.model";
-import { getEffectiveWeight } from "../utils/rarity";
+import { Card, ICard } from "../models/Card.model.js";
+import { Pack } from "../models/Pack.model.js";
+import { getEffectiveWeight } from "../utils/rarity.js";
 
 const initialCards = [
     {
@@ -107,7 +107,7 @@ export async function seedDatabase() {
                 price: 1200,
                 imageUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop",
                 accentColor: "purple",
-                cardDocs: seededCards.filter(c => ["legendary", "epic", "rare"].includes(c.rarity))
+                cardDocs: seededCards.filter((c: ICard) => ["legendary", "epic", "rare"].includes(c.rarity))
             },
             {
                 name: "Uprising Storm",
@@ -115,7 +115,7 @@ export async function seedDatabase() {
                 price: 1500,
                 imageUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop",
                 accentColor: "amber",
-                cardDocs: seededCards.filter(c => c.name.includes("Eren") || c.name.includes("Levi") || c.rarity === "common")
+                cardDocs: seededCards.filter((c: ICard) => c.name.includes("Eren") || c.name.includes("Levi") || c.rarity === "common")
             },
             {
                 name: "Demon Slayer Pack",
@@ -123,7 +123,7 @@ export async function seedDatabase() {
                 price: 800,
                 imageUrl: "https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=1000&auto=format&fit=crop",
                 accentColor: "blue",
-                cardDocs: seededCards.filter(c => c.name.includes("Tanjiro") || c.rarity === "common")
+                cardDocs: seededCards.filter((c: ICard) => c.name.includes("Tanjiro") || c.rarity === "common")
             },
             {
                 name: "Cursed Kings",
@@ -131,7 +131,7 @@ export async function seedDatabase() {
                 price: 3000,
                 imageUrl: "https://images.unsplash.com/photo-1626544823105-db93a58a683a?q=80&w=1000&auto=format&fit=crop",
                 accentColor: "purple",
-                cardDocs: seededCards.filter(c => ["legendary", "epic"].includes(c.rarity))
+                cardDocs: seededCards.filter((c: ICard) => ["legendary", "epic"].includes(c.rarity))
             },
             {
                 name: "Godlike Artifacts",
@@ -139,7 +139,7 @@ export async function seedDatabase() {
                 price: 5000,
                 imageUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop",
                 accentColor: "amber",
-                cardDocs: seededCards.filter(c => ["legendary", "epic"].includes(c.rarity))
+                cardDocs: seededCards.filter((c: ICard) => ["legendary", "epic"].includes(c.rarity))
             }
         ];
 

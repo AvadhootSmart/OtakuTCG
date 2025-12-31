@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { auth } from "../utils/auth";
-import { UserProfile } from "../models/UserProfile.model";
+import { auth } from "../utils/auth.js";
+import { UserProfile } from "../models/UserProfile.model.js";
 
 const router = Router();
 

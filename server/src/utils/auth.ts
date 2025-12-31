@@ -1,8 +1,8 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { client, db } from "../db/db.config";
+import { client, db } from "../db/db.config.js";
 import { jwt } from "better-auth/plugins";
-import { UserProfile } from "../models/UserProfile.model";
+import { UserProfile } from "../models/UserProfile.model.js";
 
 export const auth = betterAuth({
     database: mongodbAdapter(db, {

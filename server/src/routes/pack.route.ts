@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { Pack } from "../models/Pack.model";
-import { Card, ICard } from "../models/Card.model";
-import { auth } from "../utils/auth";
-import { calculatePackProbabilities, drawCardFromPack } from "../utils/rarity";
-import { UserProfile } from "../models/UserProfile.model";
+import { Pack } from "../models/Pack.model.js";
+import { Card, ICard } from "../models/Card.model.js";
+import { auth } from "../utils/auth.js";
+import { calculatePackProbabilities, drawCardFromPack } from "../utils/rarity.js";
+import { UserProfile } from "../models/UserProfile.model.js";
 
 const router = Router();
 
@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
         const packs = await Pack.find().populate("cards");
 
         // Recalculate probabilities on-the-fly based on current RARITY_WEIGHTS
-        const packsWithCurrentProbabilities = packs.map(pack => {
+        const packsWithCurrentProbabilities = packs.map((pack: any) => {
             const packObj = pack.toObject();
             if (packObj.cards && packObj.cards.length > 0) {
                 packObj.probabilities = calculatePackProbabilities(packObj.cards as ICard[]);
