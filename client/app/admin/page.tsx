@@ -47,6 +47,7 @@ export default function AdminPage() {
         description: "",
         price: 0,
         imageUrl: "",
+        accentColor: "blue",
         cards: []
     });
 
@@ -222,7 +223,7 @@ export default function AdminPage() {
                 toast.success("Pack created successfully");
             }
             setIsEditingPack(false);
-            setCurrentPack({ name: "", description: "", price: 0, imageUrl: "", cards: [] });
+            setCurrentPack({ name: "", description: "", price: 0, imageUrl: "", accentColor: "blue", cards: [] });
         } catch (error: any) {
             toast.error(error.response?.data?.error || "Failed to save pack");
         }
@@ -629,7 +630,7 @@ export default function AdminPage() {
                                     {!isEditingPack && (
                                         <Button onClick={() => {
                                             setIsEditingPack(true);
-                                            setCurrentPack({ name: "", description: "", price: 0, imageUrl: "", cards: [] });
+                                            setCurrentPack({ name: "", description: "", price: 0, imageUrl: "", accentColor: "blue", cards: [] });
                                         }} size="sm">
                                             <Plus className="w-4 h-4 mr-2" />
                                             Create Pack
@@ -687,6 +688,20 @@ export default function AdminPage() {
                                                     onChange={(e) => handlePackFormChange('imageUrl', e.target.value)}
                                                     placeholder="https://..."
                                                 />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label>Accent Color</Label>
+                                                <select
+                                                    value={currentPack.accentColor || "blue"}
+                                                    onChange={(e) => handlePackFormChange('accentColor', e.target.value)}
+                                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                >
+                                                    <option value="blue">Blue</option>
+                                                    <option value="purple">Purple</option>
+                                                    <option value="amber">Amber</option>
+                                                    <option value="slate">Slate</option>
+                                                </select>
                                             </div>
 
                                             <div className="pt-4 flex gap-3">
