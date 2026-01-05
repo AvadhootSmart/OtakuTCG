@@ -10,6 +10,7 @@ import { seedDatabase } from './db/seed.js';
 import cardRoutes from './routes/card.route.js';
 import packRoutes from './routes/pack.route.js';
 import userRoutes from './routes/user.route.js';
+import missionRoutes from './routes/mission.route.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -29,6 +30,7 @@ app.all("/api/auth/*", toNodeHandler(auth))
 app.use("/api/cards", cardRoutes);
 app.use("/api/packs", packRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/missions", missionRoutes);
 
 app.get('/', (req, res) => {
     res.send('Backend is running successfully!');

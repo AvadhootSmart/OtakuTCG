@@ -1,5 +1,6 @@
 import { Card, ICard } from "../models/Card.model.js";
 import { Pack } from "../models/Pack.model.js";
+import { Mission } from "../models/Mission.model.js";
 import { getEffectiveWeight } from "../utils/rarity.js";
 
 const initialCards = [
@@ -75,20 +76,115 @@ const initialCards = [
     }
 ];
 
+const initialMissions = [
+    {
+        title: "Heavy Hitters",
+        description: "Assemble a squad with overwhelming raw power.",
+        difficulty: "Easy",
+        criterias: [
+            {
+                type: 'min_total_stat',
+                target: 'attack',
+                value: 400,
+                description: "Total Attack must be at least 400"
+            },
+            {
+                type: 'min_total_overall',
+                target: 'overall',
+                value: 250,
+                description: "Team total overall rating must be at least 250"
+            }
+        ],
+        rewardType: "coins",
+        rewardCoins: 200,
+        rewardXp: 100
+    },
+    {
+        title: "Tactical Minds",
+        description: "Intelligence wins battles before they begin.",
+        difficulty: "Medium",
+        criterias: [
+            {
+                type: 'min_card_stat',
+                target: 'intelligence',
+                value: 80,
+                description: "All cards must have at least 80 Intelligence"
+            },
+            {
+                type: 'rarity_count',
+                target: 'rare',
+                value: 3,
+                description: "Include at least 3 Rare cards (or better)"
+            }
+        ],
+        rewardType: "coins",
+        rewardCoins: 600,
+        rewardXp: 300
+    },
+    {
+        title: "Speed Blitz",
+        description: "Strike fast and hard with a small elite team.",
+        difficulty: "Hard",
+        criterias: [
+            {
+                type: 'max_cards',
+                target: 'count',
+                value: 3,
+                description: "Use exactly 3 cards"
+            },
+            {
+                type: 'min_total_stat',
+                target: 'speed',
+                value: 280,
+                description: "Total Speed must be at least 280"
+            }
+        ],
+        rewardType: "pack",
+        rewardCoins: 1000,
+        rewardXp: 500,
+        packName: "Origins Alpha"
+    },
+    {
+        title: "Iron Wall Defense",
+        description: "Create an impenetrable defensive line.",
+        difficulty: "Expert",
+        criterias: [
+            {
+                type: 'min_total_stat',
+                target: 'defense',
+                value: 1000,
+                description: "Total Defense must be at least 1000"
+            },
+            {
+                type: 'rarity_count',
+                target: 'epic',
+                value: 2,
+                description: "Include at least 2 Epic cards (or better)"
+            }
+        ],
+        rewardType: "pack",
+        rewardCoins: 2000,
+        rewardXp: 1000,
+        packName: "Godlike Artifacts"
+    }
+];
+
 export async function seedDatabase() {
     try {
         const cardCount = await Card.countDocuments();
         const packCount = await Pack.countDocuments();
+        const missionCount = await Mission.countDocuments();
 
-        // If we have at least 6 packs, we assume we're good.
-        if (cardCount >= initialCards.length && packCount >= 6) {
+        // If we have at least 6 packs and 4 missions, we assume we're good.
+        if (cardCount >= initialCards.length && packCount >= 6 && missionCount >= 4) {
             console.log("Database already seeded with enough items, skipping...");
             return;
         }
 
-        console.log("Seeding database with new cards and packs...");
+        console.log("Seeding database with new cards, packs and missions...");
         await Card.deleteMany({});
         await Pack.deleteMany({});
+        await Mission.deleteMany({});
 
         const seededCards = await Card.insertMany(initialCards);
 
@@ -180,8 +276,24 @@ export async function seedDatabase() {
             };
         });
 
-        await Pack.insertMany(initialPacks);
+        const seededPacks = await Pack.insertMany(initialPacks);
         console.log("Packs seeded with scoped probabilities");
+
+        // Seed Missions
+        const missionsToSeed = initialMissions.map(m => {
+            const missionData: any = { ...m };
+            if (m.rewardType === 'pack' && (m as any).packName) {
+                const targetPack = seededPacks.find(p => p.name === (m as any).packName);
+                if (targetPack) {
+                    missionData.rewardPackId = targetPack._id;
+                }
+                delete missionData.packName;
+            }
+            return missionData;
+        });
+
+        await Mission.insertMany(missionsToSeed);
+        console.log("Missions seeded successfully");
 
     } catch (error) {
         console.error("Seeding error:", error);

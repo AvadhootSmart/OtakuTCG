@@ -32,6 +32,11 @@ export default function ShowcasePage() {
         fetchCards();
     }, []);
 
+    const raritySortedCards = [...cards].sort((a, b) => {
+        const order: Record<string, number> = { legendary: 4, epic: 3, rare: 2, common: 1 };
+        return (order[b.rarity.toLowerCase()] || 0) - (order[a.rarity.toLowerCase()] || 0);
+    });
+
     return (
         <div className="min-h-screen bg-background p-8">
             {/* Header */}
@@ -91,7 +96,7 @@ export default function ShowcasePage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 justify-items-center">
-                            {cards.map((card) => (
+                            {raritySortedCards.map((card: ICard) => (
                                 <div key={card._id} className="flex flex-col items-center gap-4">
                                     <TradingCard
                                         id={card._id}

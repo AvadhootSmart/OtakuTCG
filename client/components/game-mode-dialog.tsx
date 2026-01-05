@@ -7,14 +7,14 @@ import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 
 const modes = [
-    {
-        title: "Gauntlet",
-        description: "Enter the Gauntlet and face a series of increasingly difficult AI opponents to earn rare rewards.",
-        icon: Trophy,
-        color: "from-blue-600 to-cyan-400",
-        delay: 0.1,
-        href: "/play/gauntlet",
-    },
+    // {
+    //     title: "Gauntlet",
+    //     description: "Enter the Gauntlet and face a series of increasingly difficult AI opponents to earn rare rewards.",
+    //     icon: Trophy,
+    //     color: "from-blue-600 to-cyan-400",
+    //     delay: 0.1,
+    //     href: "/play/gauntlet",
+    // },
     {
         title: "Faction Builder",
         description: "Construct and refine your deck. Test new strategies against the AI and optimize your Faction's synergy.",
@@ -56,7 +56,7 @@ export function GameModeDialog({ children }: GameModeDialogProps) {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {modes.map((mode) => (
                             <motion.div
                                 key={mode.title}

@@ -91,7 +91,7 @@ export function TradingCard({
 
             {/* Header Overlay: Name and Rating */}
             <div className="absolute top-0 left-0 w-full p-4 flex justify-between items-start z-10">
-                <div className="px-3 py-1 bg-white/10 dark:bg-black/20 backdrop-blur-md rounded-lg shadow-sm border border-white/10">
+                <div className="px-3 py-1 bg-white/10 dark:bg-black/20 backdrop-blur-md rounded-lg shadow-sm border border-white/10 w-fit">
                     <h3 className={`text-lg font-black tracking-tight rock-salt ${style.text}`}>
                         {name}
                     </h3>

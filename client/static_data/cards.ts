@@ -6,7 +6,7 @@ export const cards: TradingCardProps[] = [
         name: "Gojo Satoru",
         overall: 89,
         rarity: "legendary",
-        imageUrl: "gojo.gif",
+        imageUrl: "/gojo.gif",
         attributes: {
             attack: 94,
             defense: 82,

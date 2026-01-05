@@ -11,7 +11,8 @@ import Image from "next/image";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { FACTION_BUILDER_MISSIONS, IFactionBuilderMission, IFactionBuilderCriteria } from "@/static_data/missions";
+import { getMissionById, completeMission } from "@/api/missions";
+import { IMission, IMissionCriteria } from "@/types/mission";
 
 export default function FactionMissionPage() {
     const params = useParams();
@@ -19,32 +20,37 @@ export default function FactionMissionPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [profile, setProfile] = useState<IUserProfile | null>(null);
     const [faction, setFaction] = useState<ICard[]>([]);
-    const [mission, setMission] = useState<IFactionBuilderMission | null>(null);
+    const [mission, setMission] = useState<IMission | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Limits
     const MAX_FACTION_SIZE = 5;
 
     useEffect(() => {
-        const missionId = params.id as string;
-        const foundMission = FACTION_BUILDER_MISSIONS.find(m => m.id === missionId);
-        if (!foundMission) {
-            toast.error("Mission not found");
-            router.push("/play/faction-builder");
-            return;
-        }
-        setMission(foundMission);
-        fetchProfile();
+        const fetchMissionAndProfile = async () => {
+            try {
+                const missionId = params.id as string;
+                const foundMission = await getMissionById(missionId);
+                setMission(foundMission);
+                await fetchProfile();
+            } catch (error) {
+                console.error("Failed to fetch mission", error);
+                toast.error("Mission not found");
+                router.push("/play/faction-builder");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchMissionAndProfile();
     }, [params.id, router]);
 
     const fetchProfile = async () => {
         try {
             const res = await api.get("/user/profile");
             setProfile(res.data);
-            setIsLoading(false);
         } catch (error) {
             console.error("Failed to fetch profile", error);
             toast.error("Failed to load collection");
-            setIsLoading(false);
         }
     };
 
@@ -78,8 +84,7 @@ export default function FactionMissionPage() {
     const avgOverall = faction.length > 0 ? Math.round(totalStats.overall / faction.length) : 0;
 
     // Validation Logic
-    // Validation Logic
-    const getCriteriaStatus = (criteria: IFactionBuilderCriteria) => {
+    const getCriteriaStatus = (criteria: IMissionCriteria) => {
         let current = 0;
         let target = criteria.value;
         let met = false;
@@ -95,15 +100,9 @@ export default function FactionMissionPage() {
             }
             case 'min_card_stat': {
                 const targetAttribute = criteria.target as keyof ICard['attributes'];
-                // Ensure valid attribute key
-                const validAttributes = ['attack', 'defense', 'speed', 'intelligence'];
-
                 const validCardsCount = faction.filter(c => c.attributes[targetAttribute] >= criteria.value).length;
                 current = validCardsCount;
-                target = faction.length > 0 ? faction.length : 0; // "Of current cards" 
-
-                // Logic: All cards must meet it. If 0 cards, technically condition "all cards > X" could be true in math, 
-                // but meaningfully for a mission, you need a team.
+                target = faction.length > 0 ? faction.length : 0;
                 met = faction.length > 0 && validCardsCount === faction.length;
                 progressText = `${validCardsCount}/${Math.max(1, faction.length)} Units`;
                 break;
@@ -137,16 +136,27 @@ export default function FactionMissionPage() {
 
     const allCriteriaMet = mission ? mission.criterias.every(c => getCriteriaStatus(c).met) : false;
 
-    const handleCompleteMission = () => {
-        if (!allCriteriaMet) {
+    const handleCompleteMission = async () => {
+        if (!allCriteriaMet || !mission) {
             toast.error("Mission criteria not met!");
             return;
         }
-        toast.success(`Mission "${mission?.title}" Completed! Rewards: ${mission?.rewards.coins} Coins, ${mission?.rewards.xp} XP`);
-        // Here we would call backend to complete mission
-        setTimeout(() => {
-            router.push("/play/faction-builder");
-        }, 1500);
+
+        setIsSubmitting(true);
+        try {
+            const cardIds = faction.map(c => c._id);
+            const response = await completeMission(mission._id, cardIds);
+
+            toast.success(response.message || `Mission "${mission.title}" Completed!`);
+
+            setTimeout(() => {
+                router.push("/play/faction-builder");
+            }, 1500);
+        } catch (error: any) {
+            console.error("Failed to complete mission:", error);
+            toast.error(error.response?.data?.error || "Failed to complete mission");
+            setIsSubmitting(false);
+        }
     };
 
     if (isLoading || !mission) {
@@ -182,7 +192,8 @@ export default function FactionMissionPage() {
                                 {mission.title}
                                 <span className={`text-xs px-2 py-0.5 rounded-full border ${mission.difficulty === 'Easy' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
                                     mission.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                                        'bg-red-500/10 text-red-500 border-red-500/20'
+                                        mission.difficulty === 'Hard' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
+                                            'bg-red-500/10 text-red-500 border-red-500/20'
                                     }`}>
                                     {mission.difficulty}
                                 </span>
@@ -211,11 +222,12 @@ export default function FactionMissionPage() {
                         <div className="flex gap-2">
                             <Button
                                 onClick={handleCompleteMission}
-                                disabled={!allCriteriaMet}
+                                disabled={!allCriteriaMet || isSubmitting}
                                 className={allCriteriaMet ? "bg-green-600 hover:bg-green-700 text-white" : "opacity-50"}
                             >
-                                {allCriteriaMet ? <CheckCircle className="w-4 h-4 mr-2" /> : <Shield className="w-4 h-4 mr-2" />}
-                                Complete Mission
+                                {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> :
+                                    allCriteriaMet ? <CheckCircle className="w-4 h-4 mr-2" /> : <Shield className="w-4 h-4 mr-2" />}
+                                {isSubmitting ? "Completing..." : "Complete Mission"}
                             </Button>
                         </div>
                     </div>
@@ -256,9 +268,8 @@ export default function FactionMissionPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                             {profile.ownedCards.map((ownership, index) => {
                                 const card = ownership.cardId;
-                                const isInFaction = faction.some(c => c._id === card._id);
-
                                 if (!card) return null;
+                                const isInFaction = faction.some(c => c._id === card._id);
 
                                 return (
                                     <div key={index} className="relative group">
@@ -352,8 +363,6 @@ export default function FactionMissionPage() {
                                 </div>
                             ))}
                         </div>
-
-                        {/* Power Summary Footer - Removed as requested */}
                     </div>
                 </div>
             </main>

@@ -5,11 +5,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { getCards, updateCard, deleteCard, createCard, bulkCreateCards } from "@/api/cards";
 import { getPacks, createPack, updatePack, deletePack, recalculateProbabilities } from "@/api/packs";
+import { getMissions, createMission, updateMission, deleteMission } from "@/api/missions";
 import { ICard } from "@/types/card";
 import { IPack } from "@/types/pack";
-import { Loader2, Save, Trash2, Plus, Upload, Shield, Package, LayoutGrid, X, Eye } from "lucide-react";
+import { IMission } from "@/types/mission";
+import { Loader2, Save, Trash2, Plus, Upload, Shield, Package, LayoutGrid, X, Eye, Target, Trophy, Coins } from "lucide-react";
 import { toast } from "sonner";
 import { TradingCard, TradingCardProps } from "@/components/TradingCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,8 +30,10 @@ import Image from "next/image";
 export default function AdminPage() {
     const [cards, setCards] = useState<ICard[]>([]);
     const [packs, setPacks] = useState<IPack[]>([]);
+    const [missions, setMissions] = useState<IMission[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPacksLoading, setIsPacksLoading] = useState(false);
+    const [isMissionsLoading, setIsMissionsLoading] = useState(false);
     const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
     const [editedCards, setEditedCards] = useState<Map<string, Partial<ICard>>>(new Map());
     const [editingImageInputs, setEditingImageInputs] = useState<Map<string, string>>(new Map());
@@ -51,6 +63,18 @@ export default function AdminPage() {
         cards: []
     });
 
+    // Mission Form State
+    const [isEditingMission, setIsEditingMission] = useState(false);
+    const [currentMission, setCurrentMission] = useState<Partial<IMission>>({
+        title: "",
+        description: "",
+        difficulty: "Easy",
+        criterias: [],
+        rewardType: "coins",
+        rewardCoins: 50,
+        rewardXp: 100
+    });
+
     const { data: session, isPending } = authClient.useSession();
 
     if (session?.user.name !== "Magnetic" && !isPending) {
@@ -61,6 +85,7 @@ export default function AdminPage() {
     useEffect(() => {
         fetchCards();
         fetchPacks();
+        fetchMissions();
     }, []);
 
     const fetchCards = async () => {
@@ -84,6 +109,18 @@ export default function AdminPage() {
             toast.error(error.response?.data?.error || "Failed to fetch packs");
         } finally {
             setIsPacksLoading(false);
+        }
+    };
+
+    const fetchMissions = async () => {
+        try {
+            setIsMissionsLoading(true);
+            const data = await getMissions();
+            setMissions(data);
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || "Failed to fetch missions");
+        } finally {
+            setIsMissionsLoading(false);
         }
     };
 
@@ -248,6 +285,76 @@ export default function AdminPage() {
         }
     };
 
+    // Mission Handlers
+    const handleMissionFormChange = (field: string, value: any) => {
+        setCurrentMission({ ...currentMission, [field]: value });
+    };
+
+    const handleAddCriteria = () => {
+        const newCriteria = {
+            type: 'min_total_stat' as any,
+            target: 'attack',
+            value: 100,
+            description: "New Criteria"
+        };
+        setCurrentMission({
+            ...currentMission,
+            criterias: [...(currentMission.criterias || []), newCriteria]
+        });
+    };
+
+    const handleRemoveCriteria = (index: number) => {
+        setCurrentMission({
+            ...currentMission,
+            criterias: (currentMission.criterias || []).filter((_, i) => i !== index)
+        });
+    };
+
+    const handleCriteriaChange = (index: number, field: string, value: any) => {
+        const updated = [...(currentMission.criterias || [])];
+        (updated[index] as any)[field] = field === 'value' ? Number(value) : value;
+        setCurrentMission({ ...currentMission, criterias: updated });
+    };
+
+    const handleSaveMission = async () => {
+        if (!currentMission.title || !currentMission.difficulty) {
+            toast.error("Title and Difficulty are required");
+            return;
+        }
+
+        try {
+            if (currentMission._id) {
+                const updated = await updateMission(currentMission._id, currentMission);
+                setMissions(missions.map(m => m._id === currentMission._id ? updated : m));
+                toast.success("Mission updated successfully");
+            } else {
+                const created = await createMission(currentMission as any);
+                setMissions([...missions, created]);
+                toast.success("Mission created successfully");
+            }
+            setIsEditingMission(false);
+            setCurrentMission({ title: "", description: "", difficulty: "Easy", criterias: [], rewardType: "coins", rewardCoins: 50, rewardXp: 100 });
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || "Failed to save mission");
+        }
+    };
+
+    const handleEditMission = (mission: IMission) => {
+        setCurrentMission(mission);
+        setIsEditingMission(true);
+    };
+
+    const handleDeleteMission = async (missionId: string) => {
+        if (!confirm("Are you sure you want to delete this mission?")) return;
+        try {
+            await deleteMission(missionId);
+            setMissions(missions.filter(m => m._id !== missionId));
+            toast.success("Mission deleted successfully");
+        } catch (error: any) {
+            toast.error(error.response?.data?.error || "Failed to delete mission");
+        }
+    };
+
     const handleAddNewCardRow = () => {
         setNewCards([...newCards, {
             name: "New Card",
@@ -339,7 +446,7 @@ export default function AdminPage() {
                     <TabsList className="grid w-full max-w-md grid-cols-3">
                         <TabsTrigger value="cards">Cards</TabsTrigger>
                         <TabsTrigger value="packs">Packs</TabsTrigger>
-                        <TabsTrigger value="settings">Settings</TabsTrigger>
+                        <TabsTrigger value="missions">Missions</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="cards" className="mt-8">
@@ -820,9 +927,328 @@ export default function AdminPage() {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="settings" className="mt-8">
-                        <div className="text-center py-20">
-                            <p className="text-muted-foreground">Settings coming soon...</p>
+                    <TabsContent value="missions" className="mt-8">
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-2xl font-bold">Mission Management</h2>
+                                <div className="flex gap-2">
+                                    <Button onClick={fetchMissions} variant="outline" size="sm">
+                                        Refresh
+                                    </Button>
+                                    {!isEditingMission && (
+                                        <Button onClick={() => {
+                                            setIsEditingMission(true);
+                                            setCurrentMission({ title: "", description: "", difficulty: "Easy", criterias: [], rewardType: "coins", rewardCoins: 50, rewardXp: 100 });
+                                        }} size="sm">
+                                            <Plus className="w-4 h-4 mr-2" />
+                                            Create Mission
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {isEditingMission ? (
+                                <div className="border rounded-xl p-8 bg-card shadow-lg space-y-8 animate-in fade-in slide-in-from-top-4">
+                                    <div className="flex items-center justify-between border-b pb-4">
+                                        <div>
+                                            <h3 className="text-xl font-bold">{currentMission._id ? "Edit Mission" : "Create New Mission"}</h3>
+                                            <p className="text-sm text-muted-foreground">Define your mission objectives and rewards</p>
+                                        </div>
+                                        <Button variant="ghost" size="icon" onClick={() => setIsEditingMission(false)}>
+                                            <X className="w-5 h-5" />
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                        <div className="space-y-6">
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>Title</Label>
+                                                        <Input
+                                                            value={currentMission.title}
+                                                            onChange={(e) => handleMissionFormChange('title', e.target.value)}
+                                                            placeholder="Mission Title"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Difficulty</Label>
+                                                        <Select
+                                                            value={currentMission.difficulty}
+                                                            onValueChange={(val) => handleMissionFormChange('difficulty', val)}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select difficulty" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="Easy">Easy</SelectItem>
+                                                                <SelectItem value="Medium">Medium</SelectItem>
+                                                                <SelectItem value="Hard">Hard</SelectItem>
+                                                                <SelectItem value="Expert">Expert</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <Label>Description</Label>
+                                                    <Input
+                                                        value={currentMission.description}
+                                                        onChange={(e) => handleMissionFormChange('description', e.target.value)}
+                                                        placeholder="Brief mission context..."
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                                                    <div className="space-y-2">
+                                                        <Label>Reward Type</Label>
+                                                        <Select
+                                                            value={currentMission.rewardType}
+                                                            onValueChange={(val) => handleMissionFormChange('rewardType', val)}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select reward" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="coins">Coins</SelectItem>
+                                                                <SelectItem value="pack">Pack</SelectItem>
+                                                                <SelectItem value="card">Card</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>XP Reward</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={currentMission.rewardXp}
+                                                            onChange={(e) => handleMissionFormChange('rewardXp', Number(e.target.value))}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {currentMission.rewardType === 'coins' && (
+                                                    <div className="space-y-2">
+                                                        <Label>Coins Amount</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={currentMission.rewardCoins}
+                                                            onChange={(e) => handleMissionFormChange('rewardCoins', Number(e.target.value))}
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                {currentMission.rewardType === 'pack' && (
+                                                    <div className="space-y-2">
+                                                        <Label>Select Pack</Label>
+                                                        <Select
+                                                            value={currentMission.rewardPackId as string}
+                                                            onValueChange={(val) => handleMissionFormChange('rewardPackId', val)}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select a pack" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {packs.map(p => (
+                                                                    <SelectItem key={p._id} value={p._id}>
+                                                                        <div className="flex items-center justify-between w-full gap-4">
+                                                                            <span>{p.name}</span>
+                                                                            <Badge variant="outline" className="text-[10px] ml-auto">
+                                                                                {p.price}c / {p.cards.length} cards
+                                                                            </Badge>
+                                                                        </div>
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
+
+                                                {currentMission.rewardType === 'card' && (
+                                                    <div className="space-y-2">
+                                                        <Label>Select Card</Label>
+                                                        <Select
+                                                            value={currentMission.rewardCardId as string}
+                                                            onValueChange={(val) => handleMissionFormChange('rewardCardId', val)}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select a card" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {cards.map(c => (
+                                                                    <SelectItem key={c._id} value={c._id}>
+                                                                        <div className="flex items-center justify-between w-full gap-4">
+                                                                            <span>{c.name}</span>
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className={`text-[10px] ml-auto uppercase ${c.rarity === 'legendary' ? 'border-amber-500 text-amber-500' :
+                                                                                    c.rarity === 'epic' ? 'border-purple-500 text-purple-500' :
+                                                                                        c.rarity === 'rare' ? 'border-blue-500 text-blue-500' :
+                                                                                            'border-slate-500 text-slate-500'
+                                                                                    }`}
+                                                                            >
+                                                                                {c.rarity}
+                                                                            </Badge>
+                                                                        </div>
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="pt-4 flex gap-3 border-t">
+                                                <Button onClick={handleSaveMission} className="flex-1">
+                                                    <Save className="w-4 h-4 mr-2" />
+                                                    {currentMission._id ? "Update Mission" : "Create Mission"}
+                                                </Button>
+                                                <Button variant="outline" onClick={() => setIsEditingMission(false)}>
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-lg font-bold">Criteria ({(currentMission.criterias || []).length})</Label>
+                                                <Button onClick={handleAddCriteria} size="sm" variant="outline">
+                                                    <Plus className="w-3 h-3 mr-1" /> Add Criteria
+                                                </Button>
+                                            </div>
+
+                                            <div className="space-y-4 h-[400px] overflow-y-auto pr-2">
+                                                {(currentMission.criterias || []).map((crit, idx) => (
+                                                    <div key={idx} className="p-4 border rounded-lg bg-black/20 space-y-3 relative group/crit">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="absolute top-2 right-2 opacity-0 group-hover/crit:opacity-100 transition-opacity"
+                                                            onClick={() => handleRemoveCriteria(idx)}
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </Button>
+
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] uppercase">Type</Label>
+                                                                <Select
+                                                                    value={crit.type}
+                                                                    onValueChange={(val) => handleCriteriaChange(idx, 'type', val)}
+                                                                >
+                                                                    <SelectTrigger className="h-8 text-[10px]">
+                                                                        <SelectValue placeholder="Type" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="min_total_stat">Min Total Stat</SelectItem>
+                                                                        <SelectItem value="min_card_stat">Min Card Stat</SelectItem>
+                                                                        <SelectItem value="rarity_count">Rarity Count</SelectItem>
+                                                                        <SelectItem value="min_total_overall">Min Total Overall</SelectItem>
+                                                                        <SelectItem value="max_cards">Max Cards</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] uppercase">Target</Label>
+                                                                <Input
+                                                                    value={crit.target}
+                                                                    onChange={(e) => handleCriteriaChange(idx, 'target', e.target.value)}
+                                                                    className="h-8 text-[10px]"
+                                                                    placeholder="attack/rare/etc"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-[80px_1fr] gap-3">
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] uppercase">Value</Label>
+                                                                <Input
+                                                                    type="number"
+                                                                    value={crit.value}
+                                                                    onChange={(e) => handleCriteriaChange(idx, 'value', e.target.value)}
+                                                                    className="h-8 text-[10px]"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <Label className="text-[10px] uppercase">Quick Description</Label>
+                                                                <Input
+                                                                    value={crit.description}
+                                                                    onChange={(e) => handleCriteriaChange(idx, 'description', e.target.value)}
+                                                                    className="h-8 text-[10px]"
+                                                                    placeholder="Displayed to user"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {(currentMission.criterias || []).length === 0 && (
+                                                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
+                                                        <Target className="w-8 h-8 mb-2 opacity-20" />
+                                                        <p className="text-xs">No criteria added yet</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {missions.map((mission) => (
+                                        <div key={mission._id} className="border rounded-xl p-6 bg-card flex flex-col gap-4 relative group hover:border-foreground/20 transition-colors">
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <div className={`text-[10px] uppercase font-black px-2 py-0.5 rounded inline-block mb-1 ${mission.difficulty === 'Easy' ? 'bg-green-500/10 text-green-500' :
+                                                        mission.difficulty === 'Medium' ? 'bg-blue-500/10 text-blue-500' :
+                                                            mission.difficulty === 'Hard' ? 'bg-orange-500/10 text-orange-500' :
+                                                                'bg-red-500/10 text-red-500'
+                                                        }`}>
+                                                        {mission.difficulty}
+                                                    </div>
+                                                    <h3 className="font-bold text-lg leading-tight">{mission.title}</h3>
+                                                </div>
+                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Button size="icon" variant="ghost" onClick={() => handleEditMission(mission)} className="h-8 w-8">
+                                                        <LayoutGrid className="w-4 h-4" />
+                                                    </Button>
+                                                    <Button size="icon" variant="ghost" onClick={() => handleDeleteMission(mission._id)} className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            <p className="text-sm text-muted-foreground line-clamp-2">{mission.description}</p>
+
+                                            <div className="grid grid-cols-2 gap-2 mt-auto pt-4 border-t">
+                                                <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                                                    <Trophy className="w-3 h-3 text-amber-500" />
+                                                    {mission.rewardXp} XP
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+                                                    {mission.rewardType === 'coins' && <Coins className="w-3 h-3 text-yellow-500" />}
+                                                    {mission.rewardType === 'pack' && <Package className="w-3 h-3 text-blue-500" />}
+                                                    {mission.rewardType === 'card' && <LayoutGrid className="w-3 h-3 text-purple-500" />}
+                                                    {mission.rewardType === 'coins' ? `${mission.rewardCoins} Coins` :
+                                                        mission.rewardType === 'pack' ? '1x Pack' : '1x Card'}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-2 flex -space-x-1 overflow-hidden">
+                                                {mission.criterias.map((_, i) => (
+                                                    <div key={i} className="inline-block h-1 flex-1 bg-foreground/10 rounded-full mx-0.5" />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {missions.length === 0 && !isMissionsLoading && (
+                                        <div className="col-span-full text-center py-20 border-2 border-dashed rounded-xl">
+                                            <p className="text-muted-foreground">No missions found. Create your first challenge!</p>
+                                        </div>
+                                    )}
+                                    {isMissionsLoading && (
+                                        <div className="col-span-full flex items-center justify-center py-20">
+                                            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </TabsContent>
                 </Tabs>
