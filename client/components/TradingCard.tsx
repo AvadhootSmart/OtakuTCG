@@ -17,6 +17,7 @@ export interface TradingCardProps {
     attributes?: CardAttributes;
     imageUrl?: string;
     rarity?: "common" | "rare" | "epic" | "legendary";
+    health?: number;
 }
 
 export function TradingCard({
@@ -30,6 +31,7 @@ export function TradingCard({
     },
     imageUrl = "https://framerusercontent.com/images/wPUUFSxql4UyBvz6Yxj3iju3X0.jpeg?width=2400&height=1440",
     rarity = "legendary",
+    health = 100,
 }: TradingCardProps) {
 
     const rarityStyles = {
@@ -110,7 +112,7 @@ export function TradingCard({
                         { label: "INT", val: attributes.intelligence },
                         { label: "DEF", val: attributes.defense },
                         { label: "SPD", val: attributes.speed },
-                        { label: "HP", val: 100 },
+                        { label: "HP", val: health },
                         { label: "ENG", val: 100 }
                     ].map((stat) => (
                         <div key={stat.label} className="flex justify-between items-center group/stat">
