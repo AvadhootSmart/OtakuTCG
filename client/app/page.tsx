@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Play, Package, User, Trophy, Sparkles, LogIn, UserPlus, LogOut, List, Coins } from "lucide-react";
+import { Play, Package, User, Sparkles, LogIn, UserPlus, LogOut, List, Coins } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { authClient } from "@/lib/auth-client";
@@ -58,12 +57,13 @@ export default function Home() {
       <div className="absolute bottom-10 right-10 z-10">
         <ThemeToggle />
       </div>
+
       {/* Animated Background Elements */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse delay-700" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(120,0,255,0.05)_0%,transparent_70%)]" />
-      </div>
+      {/* <div className="absolute inset-0 z-0"> */}
+      {/*   <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" /> */}
+      {/*   <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse delay-700" /> */}
+      {/*   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(120,0,255,0.05)_0%,transparent_70%)]" /> */}
+      {/* </div> */}
 
       {/* Grid Pattern overlay */}
       <div className="absolute inset-0 z-[1] opacity-20"
@@ -222,28 +222,6 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Floating Decorative Cards */}
-      <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
-        <motion.div
-          animate={{
-            y: [0, -20, 0],
-            rotate: [12, 15, 12],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-24 -left-12 w-64 h-96 bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-white/10 rounded-2xl backdrop-blur-md rotate-12"
-        />
-
-        <motion.div
-          animate={{
-            y: [0, 20, 0],
-            rotate: [-8, -12, -8],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute -top-12 -right-12 w-48 h-72 bg-gradient-to-br from-pink-500/20 to-orange-500/20 border border-white/10 rounded-2xl backdrop-blur-md -rotate-12"
-        />
-      </div>
     </div>
   );
 }
