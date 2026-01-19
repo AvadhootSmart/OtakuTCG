@@ -38,7 +38,6 @@ export default function Home() {
 
   const authenticatedMenuItems: MenuItem[] = [
     { icon: Play, label: "PLAY VS AI", isGameMode: true, primary: true },
-    { icon: Trophy, label: "MATCHMAKING", href: "/matchmaking" },
     { icon: Package, label: "MARKETPLACE", href: "/marketplace" },
     { icon: User, label: "COLLECTION", href: "/profile" },
     { icon: List, label: "SHOWCASE", href: "/showcase" },
@@ -129,7 +128,7 @@ export default function Home() {
                     }`}
                 >
                   <div className="flex items-center space-x-4 relative z-10">
-                    <item.icon className={`w-5 h-5 ${item.primary ? "text-white" : item.danger ? "text-red-400" : "text-purple-400"}`} />
+                    <item.icon className={`w-5 h-5 ${item.primary ? "text-white" : item.danger ? "text-red-400" : "text-white"}`} />
                     <span className={`text-lg font-bold tracking-tighter ${item.primary ? "text-white" : item.danger ? "text-red-200" : "text-zinc-200"}`}>
                       {item.label}
                     </span>
