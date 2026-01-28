@@ -11,7 +11,7 @@ export interface CardAttributes {
 }
 
 export interface TradingCardProps {
-    id: string;
+    _id: string;
     name?: string;
     overall?: number;
     attributes?: CardAttributes;

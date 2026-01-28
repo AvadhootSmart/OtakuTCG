@@ -11,10 +11,9 @@ const rockSalt = Rock_Salt({
 
 export const metadata: Metadata = {
   title: "OtakuTCG - Anime Trading Card Game",
-  description: "Anime Trading Card Game",
+  description: "Fan made Anime Trading Card Game",
 };
 
-import { Navbar } from "@/components/Navbar";
 import { Toaster } from "sonner";
 
 export default function RootLayout({
@@ -32,7 +31,6 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {/* <Navbar /> */}
             {children}
           </ThemeProvider>
           <Toaster richColors />

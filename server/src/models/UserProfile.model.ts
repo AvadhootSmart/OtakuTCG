@@ -25,7 +25,7 @@ export interface IUserProfile extends Document {
 
 const UserProfileSchema = new Schema<IUserProfile>({
     userId: { type: String, required: true, unique: true },
-    balance: { type: Number, default: 500 }, // Starting balance
+    balance: { type: Number, default: 30000 }, // Starting balance
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
     ownedCards: [

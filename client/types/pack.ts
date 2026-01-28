@@ -7,7 +7,7 @@ export interface IPack {
     price: number;
     imageUrl: string;
     accentColor: string;
-    cards: string[] | ICard[];
+    cards: ICard[];
     rarity?: {
         common: number;
         rare: number;

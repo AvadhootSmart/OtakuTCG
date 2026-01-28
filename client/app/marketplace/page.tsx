@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { getPacks } from "@/api/marketplace";
 import { CardPack } from "../../components/CardPack";
-import { ThemeToggle } from "../../components/theme-toggle";
-import { Sparkles, Compass, Search, Filter, Coins } from "lucide-react";
+import { Compass, Search, Filter, Coins } from "lucide-react";
 import { FeaturedBundle } from "@/components/featured-bundle";
 import { BuyCoinsDialog } from "@/components/buy-coins-dialog";
 import { useUserStore } from "@/store/useUserStore";
@@ -76,7 +75,6 @@ export default function ExplorePage() {
       <main className="max-w-7xl mx-auto">
         {/* Hero Section */}
 
-        <FeaturedBundle />
 
         <div className="mb-10 flex items-center justify-between">
           <h3 className="text-2xl font-black rock-salt">Available Packs</h3>
@@ -109,10 +107,6 @@ export default function ExplorePage() {
           )}
         </div>
       </main>
-
-      <footer className="max-w-7xl mx-auto mt-20 pt-8 border-t border-border text-center text-muted-foreground text-sm">
-        <p>© 2024 OtakuTCG Asset Marketplace</p>
-      </footer>
     </div>
   );
 }

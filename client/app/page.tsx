@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Play, Package, User, Sparkles, LogIn, UserPlus, LogOut, List, Coins } from "lucide-react";
+import { Play, Package, Sparkles, LogIn, UserPlus, LogOut, List, Coins, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { authClient } from "@/lib/auth-client";
 import { useUserStore } from "@/store/useUserStore";
 import { AuthDialog } from "@/components/auth-dialog";
 import { GameModeDialog } from "@/components/game-mode-dialog";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 interface MenuItem {
   icon: any;
@@ -38,7 +37,7 @@ export default function Home() {
   const authenticatedMenuItems: MenuItem[] = [
     { icon: Play, label: "PLAY VS AI", isGameMode: true, primary: true },
     { icon: Package, label: "MARKETPLACE", href: "/marketplace" },
-    { icon: User, label: "COLLECTION", href: "/profile" },
+    { icon: LayoutGrid, label: "COLLECTION", href: "/profile" },
     { icon: List, label: "SHOWCASE", href: "/showcase" },
     { icon: LogOut, label: "LOGOUT", onClick: () => authClient.signOut(), danger: true },
   ];
@@ -54,19 +53,9 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#050505] flex items-center justify-center">
-      <div className="absolute bottom-10 right-10 z-10">
-        <ThemeToggle />
-      </div>
-
-      {/* Animated Background Elements */}
-      {/* <div className="absolute inset-0 z-0"> */}
-      {/*   <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" /> */}
-      {/*   <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse delay-700" /> */}
-      {/*   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(120,0,255,0.05)_0%,transparent_70%)]" /> */}
-      {/* </div> */}
 
       {/* Grid Pattern overlay */}
-      <div className="absolute inset-0 z-[1] opacity-20"
+      <div className="absolute inset-0 z-[1] opacity-70"
         style={{ backgroundImage: 'radial-gradient(circle, #333 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 
       <div className="container relative z-10 flex flex-col md:flex-row items-center justify-between gap-12 px-6">
@@ -89,21 +78,6 @@ export default function Home() {
           <p className="text-lg text-zinc-400 max-w-md border-l-2 border-blue-500/50 pl-4 py-2 italic font-light text-wrap">
             "In this world, every card tells a story, and every battle defines your destiny."
           </p>
-
-          <div className="pt-8 flex items-center space-x-6 text-zinc-300">
-            <div className="flex flex-col">
-              <span className="text-xs text-zinc-500 uppercase tracking-widest mb-1 font-bold">Status</span>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-mono tracking-tighter">CONNECTED TO REALM</span>
-              </div>
-            </div>
-            <div className="h-8 w-px bg-zinc-800" />
-            <div className="flex flex-col">
-              <span className="text-xs text-zinc-500 uppercase tracking-widest mb-1 font-bold">Latency</span>
-              <span className="text-sm font-mono tracking-tighter">24ms</span>
-            </div>
-          </div>
         </motion.div>
 
         {/* Right Side: Vertical Menu */}
@@ -191,7 +165,7 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center font-bold text-white shadow-lg">
+                    <div className="w-10 h-10 rounded-lg bg-zinc-900 flex items-center justify-center font-bold text-white shadow-lg">
                       {session.user.name?.[0].toUpperCase()}
                     </div>
                     <div>

@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { TradingCard } from "@/components/TradingCard";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Sparkles, Package, Loader2 } from "lucide-react";
-import { CardPack } from "../../components/CardPack";
-import { packs, CardPack as PackType } from "../../static_data/packs";
+import { Sparkles, Loader2 } from "lucide-react";
+import { CardPack as PackType } from "../../static_data/packs";
 import { PackOpeningOverlay } from "../../components/PackOpeningOverlay";
 import { getCards } from "@/api/cards";
 import { ICard } from "@/types/card";
+import Link from "next/link";
 
 export default function ShowcasePage() {
     const [openingPack, setOpeningPack] = useState<PackType | null>(null);
@@ -51,30 +50,11 @@ export default function ShowcasePage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <a href="/" className="text-sm font-bold hover:underline">Back to Home</a>
-                    <ThemeToggle />
+                    <Link href="/" className="text-sm font-bold hover:underline">Back to Home</Link>
                 </div>
             </header>
 
             <main className="max-w-7xl mx-auto space-y-20">
-                {/* Packs Section */}
-                <section>
-                    <div className="flex items-center gap-3 mb-8">
-                        <Package className="w-6 h-6" />
-                        <h2 className="text-2xl font-black rock-salt">Unopened Packs</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 justify-items-center bg-muted/20 p-8 rounded-3xl border-2 border-dashed border-border">
-                        {packs.slice(0, 3).map((pack: PackType) => (
-                            <CardPack
-                                key={pack.id}
-                                pack={pack as any}
-                                variant="bought"
-                                onOpen={() => setOpeningPack(pack)}
-                            />
-                        ))}
-                    </div>
-                </section>
-
                 {/* Cards Section */}
                 <section>
                     <div className="flex items-center gap-3 mb-8">
@@ -119,7 +99,7 @@ export default function ShowcasePage() {
             </main>
 
             <footer className="max-w-7xl mx-auto mt-20 pt-8 border-t border-border text-center text-muted-foreground text-sm">
-                <p>© 2024 OtakuTCG Asset Preview System</p>
+                <p>© {new Date().getFullYear()} OtakuTCG Asset Preview System</p>
             </footer>
 
             {/* Pack Opening Experience */}

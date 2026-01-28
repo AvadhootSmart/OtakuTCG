@@ -5,7 +5,6 @@ import { authClient } from "../../lib/auth-client";
 import { TradingCard } from "../../components/TradingCard";
 import { CardPack } from "../../components/CardPack";
 import {
-  Sparkles,
   Package,
   LayoutGrid,
   Coins,
