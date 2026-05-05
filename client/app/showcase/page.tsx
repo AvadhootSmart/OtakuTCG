@@ -79,7 +79,7 @@ export default function ShowcasePage() {
                             {raritySortedCards.map((card: ICard) => (
                                 <div key={card._id} className="flex flex-col items-center gap-4">
                                     <TradingCard
-                                        id={card._id}
+                                        _id={card._id}
                                         name={card.name}
                                         overall={card.overall}
                                         attributes={card.attributes}

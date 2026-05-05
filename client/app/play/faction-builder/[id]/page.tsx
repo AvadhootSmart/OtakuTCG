@@ -276,7 +276,7 @@ export default function FactionMissionPage() {
                                         <div className={`transition-all duration-300 ${isInFaction ? "opacity-40 grayscale scale-95" : "hover:scale-105"}`}>
                                             <div className="origin-top-left scale-[0.85] w-[288px] h-[416px] mb-[-60px] mr-[-40px]">
                                                 <TradingCard
-                                                    id={card._id}
+                                                    _id={card._id}
                                                     name={card.name}
                                                     overall={card.overall}
                                                     rarity={card.rarity}

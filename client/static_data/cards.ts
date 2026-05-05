@@ -2,7 +2,7 @@ import { TradingCardProps } from "@/components/TradingCard";
 
 export const cards: TradingCardProps[] = [
     {
-        id: "gojo-satoru",
+        _id: "gojo-satoru",
         name: "Gojo Satoru",
         overall: 89,
         rarity: "legendary",
@@ -15,7 +15,7 @@ export const cards: TradingCardProps[] = [
         }
     },
     {
-        id: "levi-ackerman",
+        _id: "levi-ackerman",
         name: "Levi Ackerman",
         overall: 85,
         rarity: "epic",
@@ -28,7 +28,7 @@ export const cards: TradingCardProps[] = [
         }
     },
     {
-        id: "guts",
+        _id: "guts",
         name: "Guts",
         overall: 92,
         rarity: "rare",
@@ -41,7 +41,7 @@ export const cards: TradingCardProps[] = [
         }
     },
     {
-        id: "rock-lee",
+        _id: "rock-lee",
         name: "Rock Lee",
         overall: 78,
         rarity: "common",

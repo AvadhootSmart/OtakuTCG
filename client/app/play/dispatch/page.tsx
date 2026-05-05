@@ -398,7 +398,7 @@ export default function DispatchGamePage() {
                         : "opacity-50 scale-[0.9] grayscale hover:opacity-100 hover:grayscale-0"
                     )}
                   >
-                    <TradingCard {...card} id={card._id} />
+                    <TradingCard {...card} />
                   </div>
                 </div>
               );
@@ -825,7 +825,7 @@ function SquadDrawer({
                     }}
                   >
                     <div className="origin-top scale-[0.8] flex items-start justify-center overflow-visible">
-                      <TradingCard {...card} id={card._id} health={card.currentHealth} />
+                      <TradingCard {...card} health={card.currentHealth} />
                     </div>
 
                     {isBusy && (

@@ -20,6 +20,9 @@ import { ICard } from "@/types/card";
 import { IPack } from "@/types/pack";
 import { IMission } from "@/types/mission";
 import { Loader2, Save, Trash2, Plus, Upload, Shield, Package, LayoutGrid, X, Eye, Target, Trophy, Coins } from "lucide-react";
+
+/** Pack form stores card Mongo IDs; IPack.cards from the API may be populated ICard objects. */
+type PackEditorState = Partial<Omit<IPack, "cards">> & { cards?: string[] };
 import { toast } from "sonner";
 import { TradingCard, TradingCardProps } from "@/components/TradingCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -54,7 +57,7 @@ export default function AdminPage() {
 
     // Pack Form State
     const [isEditingPack, setIsEditingPack] = useState(false);
-    const [currentPack, setCurrentPack] = useState<Partial<IPack>>({
+    const [currentPack, setCurrentPack] = useState<PackEditorState>({
         name: "",
         description: "",
         price: 0,
@@ -229,7 +232,7 @@ export default function AdminPage() {
     };
 
     const toggleCardInPack = (cardId: string) => {
-        const currentCards = (currentPack.cards || []) as string[];
+        const currentCards = currentPack.cards ?? [];
         if (currentCards.includes(cardId)) {
             setCurrentPack({
                 ...currentPack,
@@ -251,11 +254,11 @@ export default function AdminPage() {
 
         try {
             if (currentPack._id) {
-                const updated = await updatePack(currentPack._id, currentPack);
+                const updated = await updatePack(currentPack._id, currentPack as Partial<IPack>);
                 setPacks(packs.map(p => p._id === currentPack._id ? updated : p));
                 toast.success("Pack updated successfully");
             } else {
-                const created = await createPack(currentPack);
+                const created = await createPack(currentPack as Partial<IPack>);
                 setPacks([...packs, created]);
                 toast.success("Pack created successfully");
             }
@@ -269,7 +272,7 @@ export default function AdminPage() {
     const handleEditPack = (pack: IPack) => {
         setCurrentPack({
             ...pack,
-            cards: (pack.cards as any[]).map(c => typeof c === 'string' ? c : c._id)
+            cards: pack.cards.map((c) => (typeof c === "string" ? c : c._id)),
         });
         setIsEditingPack(true);
     };
@@ -485,7 +488,7 @@ export default function AdminPage() {
                                                 {/* Live Preview */}
                                                 <div className="flex justify-center items-start">
                                                     <TradingCard
-                                                        id={`new-${index}`}
+                                                        _id={`new-${index}`}
                                                         name={card.name}
                                                         overall={card.overall}
                                                         rarity={card.rarity}
@@ -589,7 +592,7 @@ export default function AdminPage() {
                                                 {/* Card Preview */}
                                                 <div className="flex justify-center items-start">
                                                     <TradingCard
-                                                        id={card._id}
+                                                        _id={card._id}
                                                         name={getCardValue(card, 'name') as string}
                                                         overall={getCardValue(card, 'overall') as number}
                                                         attributes={{
@@ -824,7 +827,7 @@ export default function AdminPage() {
 
                                         <div className="space-y-4">
                                             <div className="flex items-center justify-between">
-                                                <Label className="text-lg font-bold">Select Cards ({(currentPack.cards as string[]).length} selected)</Label>
+                                                <Label className="text-lg font-bold">Select Cards ({(currentPack.cards ?? []).length} selected)</Label>
                                                 <div className="flex gap-3 px-2 py-1 bg-muted rounded text-[8px] font-bold uppercase tracking-tighter">
                                                     <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-slate-400" /> Common</div>
                                                     <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Rare</div>
@@ -835,7 +838,7 @@ export default function AdminPage() {
                                             <div className="text-[10px] text-muted-foreground uppercase tracking-widest bg-muted/50 px-2 py-1 rounded inline-block mb-2">Click cards to toggle</div>
                                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-12 h-[400px] overflow-y-auto p-4 border rounded-lg bg-black/20">
                                                 {cards.map((card) => {
-                                                    const isSelected = (currentPack.cards as string[]).includes(card._id);
+                                                    const isSelected = (currentPack.cards ?? []).includes(card._id);
                                                     return (
                                                         <div
                                                             key={card._id}
