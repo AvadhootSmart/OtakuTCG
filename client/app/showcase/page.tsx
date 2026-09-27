@@ -1,113 +1,100 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
+import { Search } from "lucide-react";
 import { TradingCard } from "@/components/TradingCard";
-import { Sparkles, Loader2 } from "lucide-react";
-import { CardPack as PackType } from "../../static_data/packs";
-import { PackOpeningOverlay } from "../../components/PackOpeningOverlay";
+import { EmptyState, GameShell, RARITY_COLOR, RARITY_ORDER, ScreenHeader } from "@/components/game-shell";
 import { getCards } from "@/api/cards";
 import { ICard } from "@/types/card";
-import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+const FILTERS = ["all", "legendary", "epic", "rare", "common"] as const;
 
 export default function ShowcasePage() {
-    const [openingPack, setOpeningPack] = useState<PackType | null>(null);
     const [cards, setCards] = useState<ICard[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+    const [query, setQuery] = useState("");
 
     useEffect(() => {
-        const fetchCards = async () => {
-            try {
-                setIsLoading(true);
-                const data = await getCards();
-                setCards(data);
-            } catch (err: any) {
-                setError(err.response?.data?.error || "Failed to fetch cards");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchCards();
+        getCards()
+            .then(setCards)
+            .catch((err: any) => setError(err.response?.data?.error || "Failed to fetch cards"))
+            .finally(() => setIsLoading(false));
     }, []);
 
-    const raritySortedCards = [...cards].sort((a, b) => {
-        const order: Record<string, number> = { legendary: 4, epic: 3, rare: 2, common: 1 };
-        return (order[b.rarity.toLowerCase()] || 0) - (order[a.rarity.toLowerCase()] || 0);
-    });
+    const visible = cards
+        .filter((c) => (filter === "all" || c.rarity === filter) && c.name.toLowerCase().includes(query.toLowerCase()))
+        .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity] || b.overall - a.overall);
 
     return (
-        <div className="min-h-screen bg-background p-8">
-            {/* Header */}
-            <header className="max-w-7xl mx-auto flex justify-between items-center mb-12">
-                <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-foreground rounded-xl flex items-center justify-center">
-                        <Sparkles className="w-6 h-6 text-background" />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-black rock-salt tracking-tighter">Inventory Showcase</h1>
-                        <p className="text-sm text-muted-foreground font-medium">Manage your collection & open packs</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <Link href="/" className="text-sm font-bold hover:underline">Back to Home</Link>
-                </div>
-            </header>
+        <GameShell className="flex flex-col px-5 pt-6 md:px-10 md:pt-8">
+            <ScreenHeader eyebrow={`Codex · ${cards.length} cards`} title="Every card">
+                <label className="plate [--c:8px] flex h-10 w-full items-center gap-2 px-3 sm:w-64">
+                    <Search className="size-4 text-muted-foreground" strokeWidth={1.5} />
+                    <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search by name"
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                </label>
+            </ScreenHeader>
 
-            <main className="max-w-7xl mx-auto space-y-20">
-                {/* Cards Section */}
-                <section>
-                    <div className="flex items-center gap-3 mb-8">
-                        <Sparkles className="w-6 h-6" />
-                        <h2 className="text-2xl font-black rock-salt">All Cards</h2>
-                    </div>
+            <div className="scroll-x -mx-5 mt-5 flex shrink-0 gap-1 border-b border-white/[0.06] px-5 md:mx-0 md:px-0">
+                {FILTERS.map((f) => {
+                    const count = f === "all" ? cards.length : cards.filter((c) => c.rarity === f).length;
+                    return (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={cn(
+                                "relative flex shrink-0 items-center gap-2 px-3 pb-3 pt-1 font-display text-sm font-semibold uppercase tracking-[0.18em] transition-colors duration-500",
+                                filter === f ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                            )}
+                        >
+                            {f !== "all" && <span className="size-1.5 rotate-45" style={{ background: RARITY_COLOR[f] }} />}
+                            {f}
+                            <span className="text-xs tabular-nums opacity-50">{count}</span>
+                            <span
+                                className={cn(
+                                    "absolute inset-x-2 -bottom-px h-[2px] transition-transform duration-500 ease-snap",
+                                    filter === f ? "scale-x-100" : "scale-x-0",
+                                )}
+                                style={{ background: f === "all" ? "var(--gold)" : RARITY_COLOR[f] }}
+                            />
+                        </button>
+                    );
+                })}
+            </div>
 
-                    {isLoading ? (
-                        <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                        </div>
-                    ) : error ? (
-                        <div className="text-center py-20">
-                            <p className="text-red-500 font-medium">{error}</p>
-                        </div>
-                    ) : cards.length === 0 ? (
-                        <div className="text-center py-20">
-                            <p className="text-muted-foreground font-medium">No cards available</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 justify-items-center">
-                            {raritySortedCards.map((card: ICard) => (
-                                <div key={card._id} className="flex flex-col items-center gap-4">
-                                    <TradingCard
-                                        _id={card._id}
-                                        name={card.name}
-                                        overall={card.overall}
-                                        attributes={card.attributes}
-                                        imageUrl={card.imageUrl}
-                                        rarity={card.rarity}
-                                    />
-                                    <div className="text-center">
-                                        <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-border bg-card shadow-sm`}>
-                                            {card.rarity}
-                                        </span>
-                                    </div>
+            <div className="scroll-area fade-y -mx-5 min-h-0 flex-1 px-5 pb-10 pt-6 md:mx-0 md:px-0">
+                {isLoading ? (
+                    <EmptyState title="Loading codex…" />
+                ) : error ? (
+                    <EmptyState title="Codex unavailable" body={error} />
+                ) : visible.length === 0 ? (
+                    <EmptyState title="No cards" body="Nothing matches this filter." />
+                ) : (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] justify-items-center gap-x-3 gap-y-6 md:grid-cols-[repeat(auto-fill,minmax(216px,1fr))]">
+                        {visible.map((card, i) => (
+                            <motion.div
+                                key={card._id}
+                                initial={{ opacity: 0, y: 24 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8, delay: Math.min(i, 12) * 0.04, ease: [0.32, 0.72, 0, 1] }}
+                                className="[zoom:0.52] md:[zoom:0.75]"
+                            >
+                                <div className="transition-transform duration-500 ease-snap hover:-translate-y-2">
+                                    <TradingCard {...card} />
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </section>
-            </main>
-
-            <footer className="max-w-7xl mx-auto mt-20 pt-8 border-t border-border text-center text-muted-foreground text-sm">
-                <p>© {new Date().getFullYear()} OtakuTCG Asset Preview System</p>
-            </footer>
-
-            {/* Pack Opening Experience */}
-            <PackOpeningOverlay
-                isOpen={!!openingPack}
-                onClose={() => setOpeningPack(null)}
-                pack={openingPack as any}
-            />
-        </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </GameShell>
     );
 }

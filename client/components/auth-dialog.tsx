@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { authClient } from "../lib/auth-client";
 
@@ -73,34 +72,36 @@ export function AuthDialog({ children }: AuthDialogProps) {
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "signin" ? "Welcome Back" : "Create an Account"}
+        <DialogHeader className="text-left">
+          <div className="eyebrow">{mode === "signin" ? "Return to the arena" : "New challenger"}</div>
+          <DialogTitle className="text-4xl italic">
+            {mode === "signin" ? "Welcome back" : "Create account"}
           </DialogTitle>
-          {error && (
-            <div className="text-sm font-medium text-destructive mt-2">
-              {error}
-            </div>
-          )}
+          <DialogDescription>
+            {mode === "signin"
+              ? "Sign in to open packs, build squads and take on missions."
+              : "Register to claim your coins and start your collection."}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="eyebrow text-muted-foreground">Username</Label>
               <Input
                 id="username"
                 name="username"
                 placeholder="yourname"
                 value={form.username}
                 onChange={handleChange}
+                className="h-11"
                 required
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="eyebrow text-muted-foreground">Email</Label>
             <Input
               id="email"
               name="email"
@@ -108,53 +109,47 @@ export function AuthDialog({ children }: AuthDialogProps) {
               placeholder="you@example.com"
               value={form.email}
               onChange={handleChange}
+              className="h-11"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="eyebrow text-muted-foreground">Password</Label>
             <Input
               id="password"
               name="password"
               type="password"
               value={form.password}
               onChange={handleChange}
+              className="h-11"
               required
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading
-              ? "Please wait..."
-              : mode === "signin"
-                ? "Sign In"
-                : "Create Account"}
-          </Button>
+          {error && (
+            <div className="border-l-2 border-destructive bg-destructive/10 px-3 py-2 text-sm text-red-200">
+              {error}
+            </div>
+          )}
+
+          <button type="submit" className="btn btn-gold h-12 w-full text-base" disabled={loading}>
+            {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+          </button>
         </form>
 
         <div className="text-center text-sm text-muted-foreground">
-          {mode === "signin" ? (
-            <>
-              Don’t have an account?{" "}
-              <button
-                className="underline"
-                onClick={() => setMode("signup")}
-              >
-                Sign up
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{" "}
-              <button
-                className="underline"
-                onClick={() => setMode("signin")}
-              >
-                Sign in
-              </button>
-            </>
-          )}
+          {mode === "signin" ? "Don’t have an account? " : "Already have an account? "}
+          <button
+            type="button"
+            className="font-medium text-gold underline-offset-4 hover:underline"
+            onClick={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setError(null);
+            }}
+          >
+            {mode === "signin" ? "Sign up" : "Sign in"}
+          </button>
         </div>
       </DialogContent>
     </Dialog>

@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/axios.config";
 import { IUserProfile } from "@/types/user";
 import { ICard } from "@/types/card";
-import { TradingCard } from "@/components/TradingCard";
-import { Button } from "@/components/ui/button";
-import { Loader2, Shield, Sword, Zap, Brain, LayoutGrid, Plus, Minus, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
-import Image from "next/image";
+import { Loader2, Shield, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { DIFFICULTY_COLOR, EmptyState, GameShell } from "@/components/game-shell";
+import { CardPicker, SquadSlots, SquadTotals } from "@/components/squad";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -161,211 +160,116 @@ export default function FactionMissionPage() {
 
     if (isLoading || !mission) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
+            <GameShell>
+                <EmptyState title="Loading contract…" />
+            </GameShell>
         );
     }
 
     if (!profile) {
         return (
-            <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-                <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
-                <Button asChild>
-                    <Link href="/">Go Home</Link>
-                </Button>
-            </div>
+            <GameShell>
+                <EmptyState
+                    title="Profile not found"
+                    body="Sign in to draft a squad."
+                    action={<Link href="/" className="btn btn-gold h-11 px-6 text-sm">Go to lobby</Link>}
+                />
+            </GameShell>
         );
     }
 
+    const color = DIFFICULTY_COLOR[mission.difficulty] ?? "#a1a1aa";
+    const statuses = mission.criterias.map((c) => ({ c, ...getCriteriaStatus(c) }));
+    const metCount = statuses.filter((s) => s.met).length;
+
     return (
-        <div className="min-h-screen bg-background pb-20">
-            {/* Header */}
-            <header className="bg-card border-b p-6 sticky top-0 z-50 shadow-md">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="icon" asChild className="mr-2">
-                            <Link href="/play/faction-builder"><ArrowLeft className="w-5 h-5" /></Link>
-                        </Button>
-                        <div>
-                            <h1 className="text-xl font-bold flex items-center gap-2">
-                                {mission.title}
-                                <span className={`text-xs px-2 py-0.5 rounded-full border ${mission.difficulty === 'Easy' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                    mission.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                                        mission.difficulty === 'Hard' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
-                                            'bg-red-500/10 text-red-500 border-red-500/20'
-                                    }`}>
-                                    {mission.difficulty}
-                                </span>
-                            </h1>
-                            <p className="text-sm text-muted-foreground">{mission.description}</p>
+        <GameShell className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_380px]">
+            {/* Collection */}
+            <section className="flex min-h-0 flex-1 flex-col px-5 pt-5 md:px-10 md:pt-8">
+                <div className="shrink-0">
+                    <Link href="/play/faction-builder" className="eyebrow inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground">
+                        <ArrowLeft className="size-3.5" strokeWidth={1.5} /> Mission board
+                    </Link>
+                    <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+                        <div className="min-w-0">
+                            <div className="eyebrow" style={{ color }}>{mission.difficulty} contract</div>
+                            <h1 className="font-display text-4xl font-extrabold uppercase italic leading-[0.9] md:text-5xl">{mission.title}</h1>
                         </div>
+                        <span className="eyebrow text-muted-foreground">{profile.ownedCards.length} owned</span>
                     </div>
-
-                    <div className="flex items-center gap-6">
-                        {/* Quick Stats Dashboard */}
-                        <div className="hidden md:flex items-center gap-4 bg-muted/50 px-4 py-2 rounded-lg border border-white/5">
-                            <div className="flex items-center gap-2 text-xs font-bold uppercase text-red-400">
-                                <Sword className="w-4 h-4" /> {totalStats.attack}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-bold uppercase text-blue-400">
-                                <Shield className="w-4 h-4" /> {totalStats.defense}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-bold uppercase text-yellow-400">
-                                <Zap className="w-4 h-4" /> {totalStats.speed}
-                            </div>
-                            <div className="flex items-center gap-2 text-xs font-bold uppercase text-purple-400">
-                                <Brain className="w-4 h-4" /> {totalStats.intelligence}
-                            </div>
-                        </div>
-
-                        <div className="flex gap-2">
-                            <Button
-                                onClick={handleCompleteMission}
-                                disabled={!allCriteriaMet || isSubmitting}
-                                className={allCriteriaMet ? "bg-green-600 hover:bg-green-700 text-white" : "opacity-50"}
-                            >
-                                {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> :
-                                    allCriteriaMet ? <CheckCircle className="w-4 h-4 mr-2" /> : <Shield className="w-4 h-4 mr-2" />}
-                                {isSubmitting ? "Completing..." : "Complete Mission"}
-                            </Button>
-                        </div>
-                    </div>
+                    <p className="mt-2 hidden max-w-2xl text-sm text-muted-foreground md:block">{mission.description}</p>
                 </div>
-            </header>
 
-            <main className="max-w-7xl mx-auto p-6 grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-8">
-
-                {/* Left: Card Collection */}
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex flex-wrap gap-2">
-                            {mission.criterias.map((c, i) => {
-                                const { met, progressText } = getCriteriaStatus(c);
-                                return (
-                                    <div key={i} className={`text-xs px-3 py-1.5 rounded-full border flex items-center gap-2 ${met ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
-                                        }`}>
-                                        {met ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                                        <span className="font-medium mr-1">{progressText}</span>
-                                        <span className="opacity-80">{c.description}</span>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                        <span className="text-xs text-muted-foreground uppercase font-bold bg-muted px-2 py-1 rounded">
-                            {profile.ownedCards.length} Owned
-                        </span>
-                    </div>
-
+                <div className="scroll-area fade-y -mx-5 mt-2 min-h-0 flex-1 px-5 pb-10 pt-5 md:mx-0 md:px-0">
                     {profile.ownedCards.length === 0 ? (
-                        <div className="text-center py-20 border-2 border-dashed rounded-xl bg-muted/20">
-                            <p className="text-muted-foreground mb-4">You don't own any cards yet.</p>
-                            <Button asChild>
-                                <Link href="/#store">Visit Store</Link>
-                            </Button>
-                        </div>
+                        <EmptyState
+                            title="No cards yet"
+                            body="You need cards to draft a squad."
+                            action={<Link href="/marketplace" className="btn btn-gold h-11 px-6 text-sm">Visit store</Link>}
+                        />
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-                            {profile.ownedCards.map((ownership, index) => {
-                                const card = ownership.cardId;
-                                if (!card) return null;
-                                const isInFaction = faction.some(c => c._id === card._id);
+                        <CardPicker
+                            owned={profile.ownedCards}
+                            isPicked={(card) => faction.some((c) => c._id === card._id)}
+                            onToggle={(card) =>
+                                faction.some((c) => c._id === card._id) ? removeFromFaction(card._id) : addToFaction(card)
+                            }
+                        />
+                    )}
+                </div>
+            </section>
 
-                                return (
-                                    <div key={index} className="relative group">
-                                        <div className={`transition-all duration-300 ${isInFaction ? "opacity-40 grayscale scale-95" : "hover:scale-105"}`}>
-                                            <div className="origin-top-left scale-[0.85] w-[288px] h-[416px] mb-[-60px] mr-[-40px]">
-                                                <TradingCard
-                                                    _id={card._id}
-                                                    name={card.name}
-                                                    overall={card.overall}
-                                                    rarity={card.rarity}
-                                                    imageUrl={card.imageUrl}
-                                                    attributes={card.attributes}
-                                                />
-                                            </div>
-                                        </div>
-                                        {!isInFaction && (
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                                <Button size="lg" className="shadow-2xl font-bold" onClick={() => addToFaction(card)}>
-                                                    <Plus className="w-5 h-5 mr-2" />
-                                                    Add
-                                                </Button>
-                                            </div>
-                                        )}
-                                        <div className="absolute top-2 right-12 bg-black/80 text-white text-[10px] font-bold px-2 py-1 rounded-full border border-white/20 z-20">
-                                            x{ownership.count}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+            {/* Squad + criteria */}
+            <aside className="flex shrink-0 flex-col gap-4 border-t border-white/[0.06] bg-[#0a0a0f]/80 p-4 lg:min-h-0 lg:gap-6 lg:border-l lg:border-t-0 lg:p-6">
+                <div className="flex items-center justify-between">
+                    <div className="font-display text-2xl font-extrabold uppercase italic">
+                        Squad <span className="text-gold tabular-nums">{faction.length}</span>
+                        <span className="text-muted-foreground">/{MAX_FACTION_SIZE}</span>
+                    </div>
+                    {faction.length > 0 && (
+                        <button onClick={() => setFaction([])} className="eyebrow text-muted-foreground transition-colors hover:text-destructive">
+                            Clear
+                        </button>
                     )}
                 </div>
 
-                {/* Right: Current Faction (Sticky Sidebar) */}
-                <div className="xl:sticky xl:top-28 h-fit space-y-6">
-                    <div className="bg-card border rounded-xl shadow-xl overflow-hidden">
-                        <div className="p-4 bg-muted/30 border-b flex justify-between items-center">
-                            <h3 className="font-bold flex items-center gap-2">
-                                <Shield className="w-5 h-5 text-blue-500" />
-                                Active Squad
-                            </h3>
-                            <Button variant="ghost" size="sm" className="h-6 text-xs text-red-400 hover:text-red-500" onClick={() => setFaction([])}>
-                                Clear All
-                            </Button>
-                        </div>
-
-                        <div className="p-4 space-y-3 min-h-[300px]">
-                            {faction.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-12 border-2 border-dashed border-white/10 rounded-lg">
-                                    <Shield className="w-12 h-12 mb-2 opacity-20" />
-                                    <p className="text-sm font-medium">Your squad is empty.</p>
-                                    <p className="text-xs opacity-50">Select cards from your collection</p>
-                                </div>
-                            ) : (
-                                faction.map((card) => (
-                                    <div key={card._id} className="group relative flex items-center gap-3 bg-muted/40 p-2 rounded-lg border border-transparent hover:border-white/10 hover:bg-muted/60 transition-all animate-in slide-in-from-right-2">
-                                        <div className="w-12 h-12 rounded-md overflow-hidden bg-black flex-shrink-0 relative">
-                                            <Image src={card.imageUrl} className="object-cover object-top" alt={card.name} fill sizes="48px" />
-                                            <div className="absolute inset-0 ring-1 ring-inset ring-black/20" />
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-bold text-sm truncate">{card.name}</h4>
-                                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground uppercase font-bold">
-                                                <span className={`
-                                                    ${card.rarity === 'legendary' ? 'text-amber-500' :
-                                                        card.rarity === 'epic' ? 'text-purple-500' :
-                                                            card.rarity === 'rare' ? 'text-blue-500' : 'text-slate-500'}
-                                                `}>{card.rarity}</span>
-                                                <span>OVR {card.overall}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                                                onClick={() => removeFromFaction(card._id)}
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </Button>
-                                        </div>
+                <div className="scroll-area flex min-h-0 flex-col gap-6 lg:flex-1">
+                    <SquadSlots cards={faction} max={MAX_FACTION_SIZE} onRemove={removeFromFaction} />
+                    <div className="hidden lg:block">
+                        <SquadTotals cards={faction} />
+                    </div>
+                    <div className="hidden lg:block">
+                        <div className="eyebrow mb-3 text-muted-foreground">Criteria · {metCount}/{statuses.length}</div>
+                        <ul className="space-y-2">
+                            {statuses.map(({ c, met, progressText }, i) => (
+                                <li
+                                    key={i}
+                                    className={`flex items-start gap-3 border-l-2 py-1.5 pl-3 transition-colors duration-500 ${met ? "border-emerald-400 bg-emerald-400/[0.06]" : "border-white/10"}`}
+                                >
+                                    {met ? (
+                                        <CheckCircle className="mt-0.5 size-4 shrink-0 text-emerald-400" strokeWidth={1.5} />
+                                    ) : (
+                                        <XCircle className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                                    )}
+                                    <div className="min-w-0 text-[13px]">
+                                        <div className={met ? "text-foreground" : "text-foreground/70"}>{c.description}</div>
+                                        <div className="font-display text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{progressText}</div>
                                     </div>
-                                ))
-                            )}
-
-                            {Array.from({ length: Math.max(0, MAX_FACTION_SIZE - faction.length) }).map((_, i) => (
-                                <div key={`empty-${i}`} className="h-16 border-2 border-dashed border-white/5 rounded-lg flex items-center justify-center">
-                                    <span className="text-xs font-bold text-white/10 uppercase tracking-widest">Empty Slot</span>
-                                </div>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     </div>
                 </div>
-            </main>
-        </div>
+
+                <button
+                    onClick={handleCompleteMission}
+                    disabled={!allCriteriaMet || isSubmitting}
+                    className="btn btn-gold h-12 w-full shrink-0 text-base"
+                >
+                    {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Shield className="size-4" strokeWidth={1.75} />}
+                    {isSubmitting ? "Deploying…" : allCriteriaMet ? "Complete mission" : `${metCount}/${statuses.length} criteria met`}
+                </button>
+            </aside>
+        </GameShell>
     );
 }

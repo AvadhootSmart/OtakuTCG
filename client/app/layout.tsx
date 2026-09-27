@@ -1,12 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Rock_Salt } from "next/font/google";
+import { Barlow_Condensed, Geist } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
-const rockSalt = Rock_Salt({
-  weight: "400",
+const barlow = Barlow_Condensed({
+  weight: ["500", "600", "700", "800"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
-  variable: "--font-rock-salt",
+  variable: "--font-barlow",
+});
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
 });
 
 export const metadata: Metadata = {
@@ -14,7 +21,9 @@ export const metadata: Metadata = {
   description: "Fan made Anime Trading Card Game",
 };
 
-import { Toaster } from "sonner";
+export const viewport: Viewport = {
+  themeColor: "#07070b",
+};
 
 export default function RootLayout({
   children,
@@ -22,19 +31,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${rockSalt.variable} antialiased`}>
-        <main>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
-          <Toaster richColors />
-        </main>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${barlow.variable} ${geist.variable} antialiased`}>
+        <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
+          {children}
+        </ThemeProvider>
+        <Toaster
+          theme="dark"
+          position="bottom-right"
+          toastOptions={{
+            className: "!bg-[#0f0f15] !border-white/10 !text-foreground !font-sans !rounded-md",
+          }}
+        />
       </body>
     </html>
   );

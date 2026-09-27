@@ -426,7 +426,7 @@ export default function AdminPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background p-8">
+        <div className="h-dvh overflow-y-auto bg-background p-8">
             <header className="max-w-7xl mx-auto mb-8">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">

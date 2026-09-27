@@ -1,306 +1,217 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { authClient } from "../../lib/auth-client";
-import { TradingCard } from "../../components/TradingCard";
-import { CardPack } from "../../components/CardPack";
-import {
-  Package,
-  LayoutGrid,
-  Coins,
-  Trophy,
-  Star,
-  ChevronLeft,
-} from "lucide-react";
-import { Button } from "../../components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-
+import { Coins, LogOut, Plus } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 import { useUserStore } from "@/store/useUserStore";
-import { PackOpeningOverlay } from "../../components/PackOpeningOverlay";
-import { IPack } from "@/types/pack";
+import { TradingCard } from "@/components/TradingCard";
+import { CardPack } from "@/components/CardPack";
+import { PackOpeningOverlay } from "@/components/PackOpeningOverlay";
 import { BuyCoinsDialog } from "@/components/buy-coins-dialog";
+import { EmptyState, GameShell, RARITY_ORDER } from "@/components/game-shell";
+import { IPack } from "@/types/pack";
+import { cn } from "@/lib/utils";
+
+const EASE = [0.32, 0.72, 0, 1] as const;
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { data: session, isPending: sessionPending } = authClient.useSession();
-  const { profile, isLoading: loading, fetchProfile } = useUserStore();
-  const [isOpeningPack, setIsOpeningPack] = useState(false);
+  const { profile, error, fetchProfile } = useUserStore();
+  const [tab, setTab] = useState<"cards" | "packs">("cards");
   const [selectedPack, setSelectedPack] = useState<IPack | null>(null);
 
   useEffect(() => {
-    if (!sessionPending && !session) {
-      window.location.href = "/";
-      return;
-    }
-
-    if (session) {
-      fetchProfile();
-    }
-  }, [session, sessionPending, fetchProfile]);
-
-  const handleOpenPack = (pack: IPack) => {
-    setSelectedPack(pack);
-    setIsOpeningPack(true);
-  };
+    if (!sessionPending && !session) router.replace("/");
+  }, [session, sessionPending, router]);
 
   const handleCloseOverlay = () => {
-    setIsOpeningPack(false);
     setSelectedPack(null);
-    fetchProfile(); // Refresh to show new card
+    fetchProfile();
   };
 
-  if (sessionPending || loading) {
+  if (!profile || !session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-12 h-12 bg-muted rounded-full" />
-          <div className="h-4 w-32 bg-muted rounded" />
-        </div>
-      </div>
+      <GameShell>
+        <EmptyState title={error ? "Vault unavailable" : "Opening vault…"} body={error ?? undefined} />
+      </GameShell>
     );
   }
 
-  const userCards =
-    profile?.ownedCards
-      ?.filter((oc: any) => oc.cardId !== null)
-      .map((oc: any) => ({
-        ...oc.cardId,
-        count: oc.count,
-      })) || [];
+  const userCards = profile.ownedCards
+    .filter((oc) => oc.cardId !== null)
+    .map((oc) => ({ ...oc.cardId, count: oc.count }))
+    .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity] || b.overall - a.overall);
+  const userPacks = profile.inventoryPacks
+    .filter((ip) => ip.packId !== null)
+    .map((ip) => ({ ...ip.packId, count: ip.count }));
+  const packTotal = userPacks.reduce((n, p) => n + p.count, 0);
 
-  const userPacks =
-    profile?.inventoryPacks
-      ?.filter((ip: any) => ip.packId !== null)
-      .map((ip: any) => ({
-        ...ip.packId,
-        count: ip.count,
-      })) || [];
+  const stats = [
+    { label: "Level", value: profile.level ?? 1 },
+    { label: "XP", value: (profile.xp ?? 0).toLocaleString() },
+    { label: "Wins", value: profile.stats?.matchesWon ?? 0 },
+    { label: "Played", value: profile.stats?.matchesPlayed ?? 0 },
+  ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
-      {/* Header / Stats Bar */}
-      <div className="relative h-60 overflow-hidden border-b border-white/5">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/60 via-background to-amber-900/40" />
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 invert dark:invert-0 brightness-100 contrast-150" />
-
-        <div className="relative max-w-6xl mx-auto px-6 h-full flex flex-col justify-between py-10">
-          <Link href="/">
-            <Button
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground -ml-4"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
-
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div className="w-28 h-28 rounded-3xl bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-400 p-1 shadow-2xl">
-                  <div className="w-full h-full rounded-[22px] bg-background flex items-center justify-center border border-white/10">
-                    <span className="text-4xl font-black rock-salt uppercase opacity-50">
-                      {session?.user.name?.charAt(0)}
-                    </span>
-                  </div>
-                </div>
-                <div className="absolute -bottom-2 -right-2 bg-foreground text-background text-xs font-black px-3 py-1 rounded-full border-2 border-background shadow-lg">
-                  LVL {profile?.level || 1}
+    <GameShell className="flex flex-col lg:grid lg:grid-cols-[340px_minmax(0,1fr)]">
+      {/* Player panel */}
+      <aside className="relative shrink-0 border-b border-white/[0.06] bg-[#0a0a0f]/70 lg:min-h-0 lg:border-b-0 lg:border-r">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-[radial-gradient(70%_60%_at_30%_0%,rgba(245,196,81,0.12),transparent_70%)]" />
+        <div className="scroll-area relative flex h-full flex-row items-center gap-4 p-4 lg:flex-col lg:items-stretch lg:gap-8 lg:p-8">
+          <div className="flex min-w-0 flex-1 items-center gap-4 lg:flex-none lg:flex-col lg:items-start lg:gap-5">
+            <div className="relative shrink-0">
+              <div className="chamfer [--c:10px] size-14 bg-[image:var(--metal-gold)] p-[2px] lg:size-24 lg:[--c:16px]">
+                <div className="chamfer [--c:9px] grid size-full place-items-center bg-[radial-gradient(circle_at_35%_30%,#26262c,#0a0a0c)] font-display text-2xl font-extrabold uppercase italic text-gold lg:text-5xl lg:[--c:15px]">
+                  {session.user.name?.[0]}
                 </div>
               </div>
-              <div>
-                <h1 className="text-4xl md:text-5xl font-black rock-salt tracking-tighter mb-3">
-                  {session?.user.name}
-                </h1>
-                <p className="text-muted-foreground text-sm font-medium opacity-70 flex items-center gap-2">
-                  Member since{" "}
-                  {new Date(
-                    session?.user.createdAt || Date.now(),
-                  ).getFullYear()}
-                </p>
-              </div>
+              <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-ink px-2 font-display text-[10px] font-bold uppercase tracking-[0.2em] text-gold ring-1 ring-gold/40 lg:text-xs">
+                Lv {profile.level ?? 1}
+              </span>
             </div>
-
-            <div className="flex flex-col gap-4">
-              <BuyCoinsDialog>
-                <div className="bg-white/5 backdrop-blur-2xl border border-white/10 cursor-pointer rounded-3xl flex items-center justify-center p-2 shadow-2xl gap-2 min-w-30">
-                  <Coins className="w-6 h-6 text-amber-500" />
-                  <span className="text-2xl font-black">
-                    {profile?.balance || 0}
-                  </span>
-                </div>
-              </BuyCoinsDialog>
-              <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl flex items-center justify-center p-2 shadow-2xl gap-2">
-                <Trophy className="w-6 h-6 text-purple-500" />
-                <span className="text-2xl font-black">
-                  {profile?.stats?.matchesWon || 0}
-                </span>
-              </div>
+            <div className="min-w-0">
+              <div className="eyebrow hidden text-muted-foreground lg:block">Commander</div>
+              <h1 className="truncate font-display text-2xl font-extrabold uppercase italic leading-none lg:mt-1 lg:text-4xl">
+                {session.user.name}
+              </h1>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Since {new Date(session.user.createdAt || Date.now()).getFullYear()}
+              </p>
             </div>
           </div>
+
+          <BuyCoinsDialog>
+            <button type="button" className="plate plate-gold [--c:10px] group flex shrink-0 items-center gap-3 p-2 pl-3 text-left lg:p-4">
+              <Coins className="size-5 text-gold" strokeWidth={1.5} />
+              <span className="flex-1">
+                <span className="eyebrow hidden lg:block">Balance</span>
+                <span className="font-display text-xl font-extrabold tabular-nums lg:text-3xl">{profile.balance.toLocaleString()}</span>
+              </span>
+              <span className="chamfer [--c:5px] hidden size-8 place-items-center bg-gold/15 text-gold transition-transform duration-500 ease-snap group-hover:scale-105 lg:grid">
+                <Plus className="size-4" strokeWidth={2} />
+              </span>
+            </button>
+          </BuyCoinsDialog>
+
+          <div className="hidden grid-cols-2 gap-2 lg:grid">
+            {stats.map((s) => (
+              <div key={s.label} className="plate [--c:8px] p-4">
+                <div className="eyebrow text-muted-foreground">{s.label}</div>
+                <div className="mt-1 font-display text-3xl font-bold tabular-nums">{s.value}</div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => authClient.signOut()}
+            className="mt-auto hidden items-center gap-2 self-start font-display text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors duration-300 hover:text-destructive lg:flex"
+          >
+            <LogOut className="size-4" strokeWidth={1.5} /> Sign out
+          </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 mt-16 space-y-24">
-        {/* Inventory Packs */}
-        <section>
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center border border-amber-500/20 shadow-inner">
-                <Package className="w-6 h-6 text-amber-500" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-black rock-salt">Inventory</h2>
-                <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase opacity-60">
-                  Unopened Booster Packs
-                </p>
-              </div>
-              <div className="ml-4 py-1 px-3 bg-muted rounded-full text-[10px] font-black opacity-50 border border-border">
-                {userPacks.length}
-              </div>
-            </div>
-          </div>
-
-          {userPacks.length > 0 ? (
-            <div className="flex overflow-x-auto pb-8 gap-8 px-4 -mx-4 scrollbar-hide">
-              {userPacks.map((pack: any, idx: number) => (
-                <motion.div
-                  key={`${idx}-${pack._id}`}
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{
-                    duration: 0.6,
-                    delay: idx * 0.1,
-                    ease: "easeOut",
-                  }}
-                  className="min-w-[320px] relative"
-                >
-                  <CardPack pack={pack} variant="bought" onOpen={() => handleOpenPack(pack)} />
-                  {pack.count > 1 && (
-                    <div className="absolute -top-3 -right-2 z-40 bg-amber-500 text-black w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shadow-[0_10px_20px_rgba(0,0,0,0.3)] border-2 border-background rotate-12">
-                      x{pack.count}
-                    </div>
+      {/* Collection */}
+      <section className="flex min-h-0 flex-1 flex-col px-5 pt-5 md:px-10 md:pt-8">
+        <div className="flex shrink-0 items-end justify-between gap-4 border-b border-white/[0.06]">
+          <div className="flex">
+            {([
+              { id: "cards", label: "Cards", count: userCards.length },
+              { id: "packs", label: "Packs", count: packTotal },
+            ] as const).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={cn(
+                  "relative flex items-baseline gap-2 px-3 pb-3 font-display text-2xl font-extrabold uppercase italic transition-colors duration-500 md:text-3xl",
+                  tab === t.id ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t.label}
+                <span className={cn("text-sm not-italic tabular-nums", t.id === "packs" && t.count > 0 ? "text-gold" : "opacity-50")}>
+                  {t.count}
+                </span>
+                <span
+                  className={cn(
+                    "absolute inset-x-2 -bottom-px h-[2px] bg-gold transition-transform duration-500 ease-snap",
+                    tab === t.id ? "scale-x-100" : "scale-x-0",
                   )}
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="relative rounded-[40px] overflow-hidden bg-[#0a0a0a] border border-amber-500/20 text-white p-8 md:p-12 shadow-2xl"
-            >
-              {/* Theme-specific gradient glow */}
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-
-              <div className="relative z-10 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-black uppercase tracking-widest mb-6 text-amber-500">
-                  <Package className="w-3 h-3" />
-                  Inventory Empty
-                </div>
-                <h2 className="text-4xl md:text-5xl font-black rock-salt leading-tight mb-4 text-white">
-                  Your <span className="text-amber-500">Vault</span> is Empty
-                </h2>
-                <p className="text-lg text-slate-400 mb-8 leading-relaxed max-w-lg font-medium">
-                  You don't have any unopened packs right now. Head over to the
-                  marketplace to discover epic warriors and rare monsters.
-                </p>
-                <Link href="/marketplace">
-                  <button className="px-8 py-4 bg-amber-500 text-black font-black rounded-xl hover:bg-amber-400 transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter shadow-[0_10px_30px_rgba(245,158,11,0.3)]">
-                    Back to Marketplace
-                  </button>
-                </Link>
-              </div>
-
-              {/* Abstract background elements - themed */}
-              <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none overflow-hidden">
-                <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border-[50px] border-amber-500 rounded-full" />
-                <div className="absolute top-1/4 right-1/4 w-[200px] h-[200px] border-[20px] border-amber-500 rounded-full" />
-              </div>
-            </motion.div>
-          )}
-        </section>
-        <section>
-          <div className="flex items-center justify-between mb-10">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center border border-purple-500/20 shadow-inner">
-                <LayoutGrid className="w-6 h-6 text-purple-500" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-black rock-salt">My Cards</h2>
-                <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase opacity-60">
-                  Digital Collection Library
-                </p>
-              </div>
-              <div className="ml-4 py-1 px-3 bg-muted rounded-full text-[10px] font-black opacity-50 border border-border">
-                {userCards.length}
-              </div>
-            </div>
+                />
+              </button>
+            ))}
           </div>
+          <Link href="/marketplace" className="eyebrow pb-3.5 text-muted-foreground transition-colors hover:text-gold">
+            Store →
+          </Link>
+        </div>
 
-          {userCards.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-16">
-              {userCards.map((card: any, idx: number) => (
+        <div className="scroll-area fade-y -mx-5 min-h-0 flex-1 px-5 pb-10 pt-6 md:mx-0 md:px-0">
+          {tab === "cards" ? (
+            userCards.length === 0 ? (
+              <EmptyState
+                title="No cards yet"
+                body="Open a booster pack to pull your first legends."
+                action={<Link href="/marketplace" className="btn btn-gold h-11 px-6 text-sm">Visit store</Link>}
+              />
+            ) : (
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] justify-items-center gap-x-3 gap-y-6 md:grid-cols-[repeat(auto-fill,minmax(202px,1fr))]">
+                {userCards.map((card, i) => (
+                  <motion.div
+                    key={card._id}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: Math.min(i, 12) * 0.04, ease: EASE }}
+                    className="relative [zoom:0.52] md:[zoom:0.7]"
+                  >
+                    <div className="transition-transform duration-500 ease-snap hover:-translate-y-2">
+                      <TradingCard {...card} />
+                    </div>
+                    {card.count > 1 && (
+                      <span className="chamfer [--c:7px] absolute -left-2 -top-2 grid h-10 min-w-12 place-items-center bg-[image:var(--metal-gold)] px-2 font-display text-xl font-extrabold text-[#1a1204]">
+                        ×{card.count}
+                      </span>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )
+          ) : userPacks.length === 0 ? (
+            <EmptyState
+              title="No sealed packs"
+              body="Buy boosters in the store, then open them here."
+              action={<Link href="/marketplace" className="btn btn-gold h-11 px-6 text-sm">Visit store</Link>}
+            />
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-5 gap-y-7 md:grid-cols-[repeat(auto-fill,minmax(170px,1fr))]">
+              {userPacks.map((pack, i) => (
                 <motion.div
-                  key={card.id}
-                  initial={{ opacity: 0, y: 30 }}
+                  key={pack._id}
+                  initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: idx * 0.05 }}
-                  className="relative flex justify-center"
+                  transition={{ duration: 0.8, delay: i * 0.05, ease: EASE }}
                 >
-                  <TradingCard {...card} />
-                  {card.count > 1 && (
-                    <div className="absolute -top-3 -right-2 z-40 bg-foreground text-background w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shadow-[0_10px_20px_rgba(0,0,0,0.3)] border-2 border-background rotate-12">
-                      x{card.count}
-                    </div>
-                  )}
+                  <CardPack pack={pack} count={pack.count} onClick={() => setSelectedPack(pack)} />
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPack(pack)}
+                    className="btn btn-gold mt-3 h-10 w-full text-sm"
+                  >
+                    Open
+                  </button>
                 </motion.div>
               ))}
             </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="relative rounded-[40px] overflow-hidden bg-[#0a0a0a] border border-purple-500/20 text-white p-8 md:p-12 shadow-2xl"
-            >
-              {/* Theme-specific gradient glow */}
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-
-              <div className="relative z-10 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] font-black uppercase tracking-widest mb-6 text-purple-500">
-                  <Star className="w-3 h-3" />
-                  Collection Empty
-                </div>
-                <h2 className="text-4xl md:text-5xl font-black rock-salt leading-tight mb-4 text-white">
-                  Start Your <span className="text-purple-500">Legend</span>
-                </h2>
-                <p className="text-lg text-slate-400 mb-8 leading-relaxed max-w-lg font-medium">
-                  Your card library is looking a bit lonely. Time to summon some
-                  legendary warriors and build your ultimate deck!
-                </p>
-                <Link href="/marketplace">
-                  <button className="px-8 py-4 bg-purple-600 text-white font-black rounded-xl hover:bg-purple-500 transition-all hover:scale-105 active:scale-95 uppercase tracking-tighter shadow-[0_10px_30px_rgba(147,51,234,0.3)]">
-                    Visit Store Marketplace
-                  </button>
-                </Link>
-              </div>
-
-              {/* Abstract background elements - themed */}
-              <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none overflow-hidden">
-                <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border-[50px] border-purple-500 rounded-full" />
-                <div className="absolute top-1/4 right-1/4 w-[200px] h-[200px] border-[20px] border-purple-500 rounded-full" />
-              </div>
-            </motion.div>
           )}
-        </section>
-      </main>
+        </div>
+      </section>
 
-      <PackOpeningOverlay
-        isOpen={isOpeningPack}
-        onClose={handleCloseOverlay}
-        pack={selectedPack}
-      />
-    </div>
+      <PackOpeningOverlay isOpen={!!selectedPack} onClose={handleCloseOverlay} pack={selectedPack} />
+    </GameShell>
   );
 }

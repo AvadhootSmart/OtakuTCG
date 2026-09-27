@@ -5,22 +5,15 @@ import { api } from "@/lib/axios.config";
 import { IUserProfile } from "@/types/user";
 import { ICard } from "@/types/card";
 import { TradingCard } from "@/components/TradingCard";
-import { Button } from "@/components/ui/button";
+import { EmptyState, GameShell, ScreenHeader } from "@/components/game-shell";
+import { CardPicker, SquadSlots, SquadTotals } from "@/components/squad";
 import {
-  Loader2,
-  Sword,
-  Zap,
-  Brain,
-  Clock,
   AlertTriangle,
   RotateCcw,
-  CheckCircle,
-  ChevronUp,
-  ChevronDown,
   MapPin,
   Home,
+  Radar,
 } from "lucide-react";
-import Image from "next/image";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -32,13 +25,10 @@ import {
 } from "@/components/ui/map";
 import {
   Drawer,
-  DrawerClose,
   DrawerContent,
   DrawerDescription,
-  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 
 import { cities, CityData } from "@/static_data/cities";
@@ -296,122 +286,96 @@ export default function DispatchGamePage() {
 
   if (!profile)
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-950">
-        <Loader2 className="animate-spin text-blue-500 w-12 h-12" />
-      </div>
+      <GameShell>
+        <EmptyState title="Establishing uplink…" />
+      </GameShell>
     );
 
   // --- RENDER: SELECTION ---
   if (gameState === "SELECTION") {
     return (
-      <div className="min-h-screen bg-slate-950 p-6 pb-20 overflow-auto">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <header className="flex flex-col md:flex-row gap-6 justify-between items-center bg-slate-900/50 backdrop-blur-md p-8 rounded-3xl border border-white/5 shadow-2xl">
-            <div>
-              <h1 className="text-4xl font-black rock-salt tracking-tighter text-white">
-                Dispatch Ops
-              </h1>
-              <p className="text-blue-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-1">
-                Select your strike team
-              </p>
-            </div>
-            <div className="flex items-center gap-8">
-              <div className="flex flex-col items-end">
-                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">
-                  Team Composition
-                </span>
-                <div className="text-3xl font-black text-blue-500 font-mono">
-                  {squad.length}
-                  <span className="text-slate-700 mx-1">/</span>
-                  {MAX_SQUAD_SIZE}
-                </div>
-              </div>
-              <Button
-                size="lg"
-                disabled={squad.length !== MAX_SQUAD_SIZE}
-                onClick={() => setGameState("PLAYING")}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-black px-10 py-8 rounded-2xl shadow-2xl shadow-blue-600/20 transition-all duration-300 active:scale-95 border-b-4 border-blue-800 disabled:opacity-50 disabled:grayscale transition-all"
-              >
-                COMMENCE MISSION
-              </Button>
-            </div>
-          </header>
+      <GameShell className="flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_380px]">
+        <section className="flex min-h-0 flex-1 flex-col px-5 pt-5 md:px-10 md:pt-8">
+          <ScreenHeader eyebrow="Dispatch · Setup" title="Assemble strike team" />
 
-          <div className="bg-slate-900/40 p-6 rounded-3xl border border-white/5 space-y-6">
-            <div className="flex items-center gap-3">
-              <MapPin className="w-5 h-5 text-blue-500" />
-              <h2 className="text-xl font-bold text-white uppercase tracking-widest">
-                Select Operational Theater
-              </h2>
+          <div className="mt-5 shrink-0">
+            <div className="eyebrow mb-2 flex items-center gap-2 text-muted-foreground">
+              <MapPin className="size-3.5" strokeWidth={1.5} /> Theater
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {cities.map((city) => (
-                <button
-                  key={city.id}
-                  onClick={() => setSelectedCity(city)}
-                  className={cn(
-                    "p-4 rounded-2xl border transition-all text-left group relative overflow-hidden",
-                    selectedCity.id === city.id
-                      ? "bg-blue-600/20 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.2)]"
-                      : "bg-slate-900/50 border-white/5 hover:border-white/10"
-                  )}
-                >
-                  <div className="font-black text-white uppercase tracking-tighter text-lg">
-                    {city.name}
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-1 line-clamp-2">
-                    {city.description}
-                  </div>
-                  {selectedCity.id === city.id && (
-                    <div className="absolute top-2 right-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 mt-12 mb-6">
-            <Sword className="w-5 h-5 text-blue-500" />
-            <h2 className="text-xl font-bold text-white uppercase tracking-widest">
-              Assemble Strike Team
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-            {profile.ownedCards.map((ownership) => {
-              const card = ownership.cardId;
-              if (!card) return null;
-              const isSelected = squad.some((c) => c._id === card._id);
-
-              return (
-                <div
-                  key={card._id}
-                  className="relative cursor-pointer group"
-                  onClick={() => toggleSquadSelection(card)}
-                >
-                  <div
+            <div className="scroll-x -mx-5 flex gap-2 px-5 pb-1 md:mx-0 md:px-0">
+              {cities.map((city) => {
+                const active = selectedCity.id === city.id;
+                return (
+                  <button
+                    key={city.id}
+                    onClick={() => setSelectedCity(city)}
                     className={cn(
-                      "transition-all duration-500 transform",
-                      isSelected
-                        ? "scale-[1]"
-                        : "opacity-50 scale-[0.9] grayscale hover:opacity-100 hover:grayscale-0"
+                      "plate [--c:8px] shrink-0 px-4 py-2.5 text-left transition-colors duration-500",
+                      active && "plate-gold",
                     )}
                   >
-                    <TradingCard {...card} />
-                  </div>
-                </div>
-              );
-            })}
+                    <div className={cn("font-display text-lg font-bold uppercase leading-none", active ? "text-gold" : "text-foreground/80")}>
+                      {city.name}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </div>
+
+          <div className="scroll-area fade-y -mx-5 mt-2 min-h-0 flex-1 px-5 pb-10 pt-5 md:mx-0 md:px-0">
+            {profile.ownedCards.length === 0 ? (
+              <EmptyState
+                title="No operatives"
+                body="You need cards to form a strike team."
+                action={<Link href="/marketplace" className="btn btn-gold h-11 px-6 text-sm">Visit store</Link>}
+              />
+            ) : (
+              <CardPicker
+                owned={profile.ownedCards}
+                isPicked={(card) => squad.some((c) => c._id === card._id)}
+                onToggle={toggleSquadSelection}
+              />
+            )}
+          </div>
+        </section>
+
+        <aside className="flex shrink-0 flex-col gap-4 border-t border-white/[0.06] bg-[#0a0a0f]/80 p-4 lg:min-h-0 lg:gap-6 lg:border-l lg:border-t-0 lg:p-6">
+          <div className="font-display text-2xl font-extrabold uppercase italic">
+            Strike team <span className="text-gold tabular-nums">{squad.length}</span>
+            <span className="text-muted-foreground">/{MAX_SQUAD_SIZE}</span>
+          </div>
+          <div className="scroll-area flex min-h-0 flex-col gap-6 lg:flex-1">
+            <SquadSlots
+              cards={squad}
+              max={MAX_SQUAD_SIZE}
+              onRemove={(id) => setSquad(squad.filter((c) => c._id !== id))}
+            />
+            <div className="hidden lg:block">
+              <SquadTotals cards={squad} />
+            </div>
+            <div className="plate [--c:10px] hidden p-4 lg:block">
+              <div className="eyebrow text-muted-foreground">Theater</div>
+              <div className="mt-1 font-display text-2xl font-bold uppercase leading-none">{selectedCity.name}</div>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{selectedCity.description}</p>
+            </div>
+          </div>
+          <button
+            disabled={squad.length !== MAX_SQUAD_SIZE}
+            onClick={() => setGameState("PLAYING")}
+            className="btn btn-gold h-12 w-full shrink-0 text-base"
+          >
+            <Radar className="size-4" strokeWidth={1.75} />
+            {squad.length === MAX_SQUAD_SIZE ? "Commence mission" : `Pick ${MAX_SQUAD_SIZE - squad.length} more`}
+          </button>
+        </aside>
+      </GameShell>
     );
   }
 
   // --- RENDER: PLAYING ---
   return (
-    <div className="h-screen w-screen bg-slate-950 relative overflow-hidden flex flex-col font-sans">
+    <div className="h-dvh w-full bg-ink relative overflow-hidden flex flex-col">
       {/* FULL SCREEN MAP BACKDROP */}
       <div className="absolute inset-0 z-0 bg-slate-900">
         <Map
@@ -474,7 +438,7 @@ export default function DispatchGamePage() {
                     {/* Marker Tooltip / Info Popup */}
                     <div
                       className={cn(
-                        "mt-3 bg-slate-900/95 backdrop-blur-xl text-white p-4 rounded-2xl border border-white/10 text-center w-56 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all animate-in zoom-in-95 fade-in duration-300 origin-top",
+                        "mt-3 bg-[#0c0c11]/95 text-white p-4 border-t-2 border-gold/60 text-center w-56 shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all animate-in zoom-in-95 fade-in duration-300 origin-top",
                         isSelected
                           ? "ring-2 ring-blue-500 scale-100 opacity-100"
                           : "scale-90 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto"
@@ -563,15 +527,15 @@ export default function DispatchGamePage() {
       {/* HUD: TOP COMMAND BAR */}
       <div className="absolute top-0 left-0 right-0 p-6 z-30 flex justify-between items-start pointer-events-none">
         <div className="flex gap-4 pointer-events-auto">
-          <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 p-5 rounded-2xl text-white shadow-2xl flex items-center gap-6 group hover:border-blue-500/30 transition-all">
-            <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
-              <Sword className="w-6 h-6 text-blue-500" />
-            </div>
+          <div className="plate [--c:12px] [--plate-bg:rgb(10_10_15/0.9)] px-5 py-3 flex items-center gap-5">
+            <Link href="/" aria-label="Lobby" className="chamfer [--c:6px] grid size-10 place-items-center bg-[image:var(--metal-gold)]">
+              <span className="chamfer [--c:5px] grid size-[38px] place-items-center bg-ink font-display text-lg font-extrabold italic text-gold">O</span>
+            </Link>
             <div>
-              <h2 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">
-                Operational Score
+              <h2 className="eyebrow text-muted-foreground">
+                {selectedCity.name} · Score
               </h2>
-              <div className="text-4xl font-mono font-black text-white tabular-nums leading-none">
+              <div className="font-display text-4xl font-extrabold tabular-nums leading-none">
                 {score.toLocaleString().padStart(6, "0")}
               </div>
             </div>
@@ -579,23 +543,22 @@ export default function DispatchGamePage() {
         </div>
 
         <div className="flex items-center gap-4 pointer-events-auto">
-          <Button
-            variant="ghost"
-            className="bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/20 font-black px-6 h-14 rounded-xl transition-all duration-300 shadow-2xl tracking-widest text-[11px]"
+          <button
+            className="btn btn-danger h-11 px-5 text-sm"
             onClick={() => {
               setGameState("SELECTION");
               setEvents([]);
               setScore(0);
             }}
           >
-            ABORT_OP
-          </Button>
+            Abort
+          </button>
         </div>
       </div>
 
       {/* HUD: LEFT MISSION FEED */}
       <div className="absolute left-6 top-32 bottom-48 w-64 z-20 pointer-events-none hidden lg:flex flex-col gap-4 overflow-hidden mask-fade-bottom">
-        <h3 className="text-[10px] font-black text-red-500/80 uppercase tracking-widest px-2 flex items-center gap-2">
+        <h3 className="eyebrow text-red-400/90 px-2 flex items-center gap-2">
           <AlertTriangle className="w-3 h-3" />
           Mission Failures
         </h3>
@@ -609,7 +572,7 @@ export default function DispatchGamePage() {
               return (
                 <div
                   key={ev.id}
-                  className="p-3 rounded-xl border border-red-500/20 bg-red-950/20 backdrop-blur-md transition-all animate-in slide-in-from-left duration-500"
+                  className="border-l-2 border-red-500/70 bg-[#140a0c]/90 p-3 animate-in slide-in-from-left duration-500"
                 >
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-[9px] font-mono text-red-400 opacity-60">
@@ -628,7 +591,7 @@ export default function DispatchGamePage() {
               );
             })}
           {events.filter((e) => e.status === "failed").length === 0 && (
-            <div className="px-2 py-4 border border-white/5 bg-white/5 rounded-xl border-dashed">
+            <div className="px-2 py-4 border border-dashed border-white/10 bg-ink/70">
               <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest text-center">
                 All Units Operational
               </p>
@@ -675,49 +638,30 @@ export default function DispatchGamePage() {
 
 function EndGamePopup({ score, onRestart }: { score: number, onRestart: () => void }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-500">
-      <div className="max-w-md w-full bg-slate-900 border border-red-500/30 rounded-[2.5rem] p-10 shadow-[0_0_100px_rgba(239,68,68,0.2)] relative overflow-hidden text-center">
-        {/* Decorative elements */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent" />
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-red-600/10 rounded-full blur-[80px]" />
-        
-        <div className="mb-8 flex justify-center">
-          <div className="w-20 h-20 bg-red-600/20 border-2 border-red-500/50 rounded-3xl flex items-center justify-center rotate-12 shadow-2xl shadow-red-500/20">
-            <AlertTriangle className="w-10 h-10 text-red-500 animate-pulse" />
-          </div>
-        </div>
-
-        <h2 className="text-4xl font-black rock-salt text-white uppercase tracking-tighter mb-2">
-          Mission<br/>Terminated
+    <div className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-[#050507]/85 p-6 backdrop-blur-md animate-in fade-in duration-500">
+      <div className="plate [--c:20px] [--plate-edge:linear-gradient(160deg,rgb(240_90_79/0.7),rgb(255_255_255/0.04)_50%,rgb(240_90_79/0.3))] w-full max-w-md p-8 text-center">
+        <div className="eyebrow text-red-400">All units K.I.A.</div>
+        <h2 className="mt-2 font-display text-5xl font-extrabold uppercase italic leading-[0.9]">
+          Mission<br />terminated
         </h2>
-        <p className="text-red-400 font-bold uppercase tracking-[0.2em] text-[10px] my-8">
-          All strike team units are K.I.A
-        </p>
 
-        <div className="bg-slate-950/50 border border-white/5 rounded-3xl p-6 mb-10 group transition-all hover:border-blue-500/20">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-2">
-            Final Operational Score
-          </span>
-          <div className="text-5xl font-mono font-black text-white group-hover:text-blue-400 transition-colors">
+        <div className="my-8 border-y border-white/[0.06] py-6">
+          <span className="eyebrow text-muted-foreground">Final score</span>
+          <div className="mt-1 font-display text-6xl font-extrabold tabular-nums text-metal">
             {score.toLocaleString().padStart(6, "0")}
           </div>
         </div>
 
-        <Button 
-          onClick={onRestart}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-8 rounded-2xl shadow-2xl shadow-blue-600/30 border-b-4 border-blue-800 transition-all active:scale-95 group"
-        >
-          <RotateCcw className="w-5 h-5 mr-3 group-hover:rotate-180 transition-transform duration-700" />
-          RE-INITIALIZE OPS
-        </Button>
-        <Link href="/profile">
-        <Button 
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-8 rounded-2xl shadow-2xl shadow-blue-600/30 border-b-4 border-blue-800 transition-all active:scale-95 group mt-2"
-        >
-          <Home className="w-5 h-5 mr-3 group-hover:rotate-180 transition-transform duration-700" />
-          Go Back to Home
-        </Button>
-        </Link>
+        <div className="space-y-2">
+          <button onClick={onRestart} className="btn btn-gold h-12 w-full text-base">
+            <RotateCcw className="size-4" strokeWidth={1.75} />
+            Redeploy
+          </button>
+          <Link href="/" className="btn btn-ghost h-12 w-full text-base">
+            <Home className="size-4" strokeWidth={1.5} />
+            Back to lobby
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -751,15 +695,14 @@ function SquadDrawer({
         {!selectedEventId && (
           <button
             onClick={() => setIsSquadExpanded(true)}
-            className="bg-slate-900/90 backdrop-blur-xl border border-white/10 px-8 py-3 rounded-2xl pointer-events-auto hover:bg-slate-800 transition-all shadow-2xl flex items-center gap-3 group"
+            className="plate [--c:10px] [--plate-bg:rgb(10_10_15/0.92)] pointer-events-auto flex items-center gap-3 py-2 pl-5 pr-2 group"
           >
-            <Sword className="w-4 h-4 text-blue-500 group-hover:rotate-12 transition-transform" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-white">
-              Review Strike Team
+            <span className="font-display text-sm font-bold uppercase tracking-[0.18em]">
+              Strike team
             </span>
             <div className="flex -space-x-2 ml-2">
               {squad.map((card) => (
-                <Avatar>
+                <Avatar key={card._id} className="rounded-none chamfer [--c:4px] ring-0">
                     <AvatarImage src={card.imageUrl} className="object-cover size-10"/>
                     <AvatarFallback>
                         {card.name[0]}
@@ -780,27 +723,27 @@ function SquadDrawer({
           }
         }}
       >
-        <DrawerContent className="bg-slate-950/95 border-t border-white/10 backdrop-blur-2xl h-[37vh]">
-          <div className="mx-auto w-full px-4 pb-12">
-            <DrawerHeader className="pb-8 hidden">
-              <DrawerTitle className="text-3xl font-black rock-salt text-white uppercase text-center flex items-center justify-center gap-4">
+        <DrawerContent className="bg-[#08080c]/95 border-t border-gold/20 backdrop-blur-2xl">
+          <div className="mx-auto w-full px-4 pb-6">
+            <DrawerHeader className="pb-2 text-center">
+              <DrawerTitle className="font-display text-2xl font-extrabold italic uppercase text-center flex items-center justify-center gap-3">
                 {selectedEventId ? (
                   <>
-                    <AlertTriangle className="w-8 h-8 text-red-500 animate-pulse" />
+                    <AlertTriangle className="size-5 text-red-500 animate-pulse" strokeWidth={1.5} />
                     {events.find((e) => e.id === selectedEventId)?.title}
                   </>
                 ) : (
                   "Strike Team Status"
                 )}
               </DrawerTitle>
-              <DrawerDescription className="text-blue-400 font-bold uppercase tracking-[0.2em] text-[10px] text-center mt-2">
+              <DrawerDescription className="eyebrow text-center">
                 {selectedEventId
                   ? "Select an operative to dispatch for this mission"
                   : "Monitor your squad and mission progress"}
               </DrawerDescription>
             </DrawerHeader>
 
-            <div className="flex flex-wrap justify-center gap-x-2 gap-y-8 min-h-[300px] items-start transition-all">
+            <div className="scroll-x flex gap-3 pt-2 pb-1 md:justify-center">
               {squad.map((card) => {
                 const activeMission = events.find(
                   (e) =>
@@ -813,10 +756,10 @@ function SquadDrawer({
                   <div
                     key={card._id}
                     className={cn(
-                      "relative transition-all duration-300 group",
+                      "relative shrink-0 [zoom:0.5] md:[zoom:0.6] [@media(max-height:700px)]:[zoom:0.42] transition-[opacity,filter] duration-500 group",
                       (isBusy || isDead)
                         ? "opacity-40 grayscale"
-                        : "cursor-pointer hover:scale-105"
+                        : "cursor-pointer"
                     )}
                     onClick={() => {
                       if (!isBusy && !isDead && selectedEventId) {
@@ -824,12 +767,12 @@ function SquadDrawer({
                       }
                     }}
                   >
-                    <div className="origin-top scale-[0.8] flex items-start justify-center overflow-visible">
+                    <div className="transition-transform duration-500 ease-snap group-hover:-translate-y-2">
                       <TradingCard {...card} health={card.currentHealth} />
                     </div>
 
                     {isBusy && (
-                      <div className="absolute inset-0 top-0 left-0 right-0 h-[80%] flex flex-col items-center justify-center bg-slate-950/40 rounded-2xl z-20 backdrop-blur-[1px]">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink/50 z-20">
                         <RotateCcw className="w-10 h-10 animate-spin text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 mt-2">
                           Deployed
@@ -838,7 +781,7 @@ function SquadDrawer({
                     )}
 
                     {isDead && (
-                      <div className="absolute inset-0 top-0 left-0 right-0 h-[80%] flex flex-col items-center justify-center bg-slate-950/40 rounded-2xl z-20 backdrop-blur-sm">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink/60 z-20">
                          <div className="p-3 bg-red-600 rounded-full shadow-2xl shadow-red-600/50 mb-3 animate-pulse">
                             <AlertTriangle className="w-8 h-8 text-white" />
                          </div>

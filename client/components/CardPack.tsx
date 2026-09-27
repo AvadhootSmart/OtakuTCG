@@ -1,152 +1,81 @@
 "use client";
 
 import { IPack } from "@/types/pack";
-import { Coins, Eye, Sparkles, Loader2 } from "lucide-react";
-import { CardsPopup } from "./CardsPopup";
-import { buyPack } from "@/api/marketplace";
-import { useState } from "react";
-import { toast } from "sonner";
-import { useUserStore } from "@/store/useUserStore";
+import { PACK_ACCENT } from "@/components/game-shell";
+import { cn } from "@/lib/utils";
 
 interface CardPackProps {
   pack: IPack;
-  variant?: "marketplace" | "bought";
-  onOpen?: () => void;
+  selected?: boolean;
+  count?: number;
+  onClick?: () => void;
+  className?: string;
 }
 
-export function CardPack({
-  pack,
-  variant = "marketplace",
-  onOpen,
-}: CardPackProps) {
-  const [isBuying, setIsBuying] = useState(false);
-  const { updateBalance, fetchProfile } = useUserStore();
+// Foil crimp at the top and bottom of a booster.
+const CRIMP = "repeating-linear-gradient(90deg, rgba(255,255,255,0.35) 0 1.5px, rgba(0,0,0,0.25) 1.5px 3px, transparent 3px 5px)";
 
-  const handleBuy = async () => {
-    setIsBuying(true);
-    try {
-      const res = await buyPack(pack._id);
-      updateBalance(res.balance);
-      await fetchProfile(); // Update inventory
-      toast.success(`Purchased ${pack.name}! New balance: ${res.balance}`);
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || "Failed to purchase pack");
-    } finally {
-      setIsBuying(false);
-    }
-  };
-
-  const accentStyles =
-    {
-      blue: "from-blue-500 to-cyan-400 border-blue-500/50 shadow-blue-500/20",
-      purple:
-        "from-purple-600 to-pink-500 border-purple-500/50 shadow-purple-500/20",
-      amber:
-        "from-amber-500 to-yellow-400 border-amber-500/50 shadow-amber-500/20",
-    }[pack.accentColor as "blue" | "purple" | "amber"] ||
-    "from-slate-500 to-slate-400 border-slate-500/50 shadow-slate-500/20";
+/** A sealed booster pack. Purely visual; fills its container's width. */
+export function CardPack({ pack, selected, count, onClick, className }: CardPackProps) {
+  const accent = PACK_ACCENT[pack.accentColor] ?? PACK_ACCENT.slate;
 
   return (
-    <div className="w-full max-w-[320px] h-full">
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn("group relative block aspect-[5/7.4] w-full text-left outline-none", className)}
+      style={{ filter: selected ? `drop-shadow(0 0 18px ${accent}66)` : "drop-shadow(0 14px 18px rgba(0,0,0,0.5))" }}
+    >
       <div
-        className={`h-full rounded-2xl border-2 bg-card overflow-hidden flex flex-col shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${accentStyles}`}
+        className={cn(
+          "absolute inset-0 transition-transform duration-700 ease-snap",
+          selected ? "-translate-y-2" : "group-hover:-translate-y-1.5 group-focus-visible:-translate-y-1.5",
+        )}
       >
-        {/* Pack Image Header */}
-        <div className="relative h-48 overflow-hidden">
+        {/* Frame */}
+        <div
+          className="chamfer [--c:12px] absolute inset-0"
+          style={{ background: `linear-gradient(150deg, ${accent}, #0b0b10 38%, #0b0b10 62%, ${accent})` }}
+        />
+        <div className="chamfer [--c:11px] absolute inset-[1.5px] overflow-hidden bg-[#0b0b10]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={pack.imageUrl}
-            alt={pack.name}
-            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+            alt=""
+            className="absolute inset-0 size-full object-cover transition-transform duration-[1200ms] ease-snap group-hover:scale-[1.06]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
-        </div>
+          <div
+            className="absolute inset-0"
+            style={{ background: `linear-gradient(180deg, ${accent}40, transparent 30%, transparent 45%, #07070bf2 88%)` }}
+          />
+          {/* Holo sheen */}
+          <div className="absolute inset-0 -translate-x-full bg-[linear-gradient(105deg,transparent_35%,rgba(255,255,255,0.22)_50%,transparent_65%)] transition-transform duration-[1100ms] ease-snap group-hover:translate-x-full" />
 
-        {/* Content Area */}
-        <div className="p-5 flex-1 flex flex-col gap-4">
-          <div>
-            <h3 className="text-xl font-black rock-salt mb-1 line-clamp-1">
-              {pack.name}
-            </h3>
-            <p className="text-xs text-muted-foreground font-medium leading-relaxed opacity-80 line-clamp-2">
-              {pack.description}
-            </p>
+          <div className="absolute inset-x-0 top-0 h-[6%]" style={{ background: `${CRIMP}, linear-gradient(${accent}cc, ${accent}55)` }} />
+          <div className="absolute inset-x-0 bottom-0 h-[6%]" style={{ background: `${CRIMP}, linear-gradient(${accent}55, ${accent}cc)` }} />
+
+          <div className="absolute inset-x-0 top-[8%] flex items-center justify-center gap-2">
+            <span className="h-px w-5" style={{ background: accent }} />
+            <span className="font-display text-[10px] font-semibold uppercase tracking-[0.3em] text-white/80">Booster</span>
+            <span className="h-px w-5" style={{ background: accent }} />
           </div>
 
-          {/* Odds Section - Small Rounded Card */}
-          {pack.rarity && (
-            <div className="bg-muted/50 rounded-xl p-3 border border-border/50">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
-                Drop Rates
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {Object.entries(pack.rarity).map(([rarity, chance], idx) => {
-                  const color =
-                    {
-                      common: "#9CA3AF",
-                      rare: "#3B82F6",
-                      epic: "#A855F7",
-                      legendary: "#EAB308",
-                    }[rarity] || "#FFFFFF";
-
-                  return (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between gap-2"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <div
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-[9px] font-black uppercase tracking-tight opacity-70">
-                          {rarity}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-black">{chance}%</span>
-                    </div>
-                  );
-                })}
-              </div>
+          <div className="absolute inset-x-0 bottom-[9%] px-3.5">
+            <div className="font-display text-[11px] font-semibold uppercase tracking-[0.25em]" style={{ color: accent }}>
+              {pack.cards?.length ?? 0} cards
             </div>
-          )}
-
-          {/* Bottom Section */}
-          <div className="mt-auto space-y-4 pt-2 border-t border-border/40">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-amber-500/10 flex items-center justify-center">
-                  <Coins className="w-3.5 h-3.5 text-amber-500" />
-                </div>
-                <span className="text-lg font-black tabular-nums">
-                  {pack.price}
-                </span>
-              </div>
-              <CardsPopup pack={pack}>
-                <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-muted-foreground hover:text-foreground transition-colors cursor-pointer group/btn">
-                  <Eye className="w-3.5 h-3.5 transition-transform group-hover/btn:scale-110" />
-                  View Cards
-                </div>
-              </CardsPopup>
+            <div className="font-display text-2xl font-extrabold uppercase italic leading-[0.95] tracking-tight text-white line-clamp-2">
+              {pack.name}
             </div>
-
-            <button
-              disabled={isBuying}
-              onClick={(e) => {
-                if (variant === "bought") {
-                  e.stopPropagation();
-                  onOpen?.();
-                } else {
-                  handleBuy();
-                }
-              }}
-              className="w-full py-3 bg-foreground text-background font-black rounded-xl hover:opacity-90 active:scale-[0.98] transition-all uppercase tracking-tighter shadow-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              {isBuying && <Loader2 className="w-4 h-4 animate-spin" />}
-              {variant === "marketplace" ? `Buy Pack` : "Open Pack"}
-            </button>
           </div>
         </div>
       </div>
-    </div>
+
+      {count !== undefined && count > 1 && (
+        <span className="chamfer [--c:5px] absolute -right-1.5 -top-1.5 z-10 grid h-7 min-w-9 place-items-center bg-[image:var(--metal-gold)] px-2 font-display text-sm font-extrabold text-[#1a1204]">
+          ×{count}
+        </span>
+      )}
+    </button>
   );
 }

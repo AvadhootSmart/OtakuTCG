@@ -1,95 +1,100 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { motion } from "motion/react";
+import { ArrowUpRight, Lock, Radar, ShieldHalf, Skull } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Cpu, Zap, Sparkles } from "lucide-react";
-import { motion } from "motion/react";
-import Link from "next/link";
 
 const modes = [
   {
     title: "Faction Builder",
-    description:
-      "Construct and refine your deck. Test new strategies against the AI and optimize your Faction's synergy.",
-    icon: Cpu,
-    color: "from-cyan-500 to-blue-600",
-    delay: 0.2,
+    tag: "Missions",
+    description: "Draft a squad of five that satisfies each contract's criteria. Clear it for coins, packs and XP.",
+    icon: ShieldHalf,
+    accent: "#60a5fa",
     href: "/play/faction-builder",
   },
   {
     title: "Dispatch",
-    description:
-      "Send your units on automated missions to gather resources and experience while you're away.",
-    icon: Zap,
-    color: "from-red-500 to-yellow-600",
-    delay: 0.3,
+    tag: "Real-time",
+    description: "Hold a city under siege. Route operatives to incidents on the map before the signal is lost.",
+    icon: Radar,
+    accent: "#f05a4f",
     href: "/play/dispatch",
+  },
+  {
+    title: "Gauntlet",
+    tag: "Coming soon",
+    description: "Climb a ladder of escalating duels. One loss and the run is over.",
+    icon: Skull,
+    accent: "#c084fc",
+    href: null,
   },
 ];
 
-interface GameModeDialogProps {
-  children: React.ReactNode;
-}
-
-export function GameModeDialog({ children }: GameModeDialogProps) {
+export function GameModeDialog({ children }: { children: React.ReactNode }) {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-4xl bg-black/95 border-white/10 backdrop-blur-2xl p-0 overflow-hidden outline-none max-h-[90vh] overflow-y-auto">
-        <div className="p-8">
-          <DialogHeader className="mb-8">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <Sparkles className="w-5 h-5 text-blue-400" />
-              <span className="text-xs font-bold tracking-[0.3em] text-blue-400 uppercase">
-                Mission Control
-              </span>
-            </div>
-            <DialogTitle className="text-4xl md:text-5xl font-bold text-center rock-salt text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-blue-400 drop-shadow-[0_0_20px_rgba(168,85,247,0.3)] leading-[2]">
-              CHOOSE YOUR BATTLE
-            </DialogTitle>
-          </DialogHeader>
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader className="text-left">
+          <div className="eyebrow">Select mode</div>
+          <DialogTitle className="text-4xl italic md:text-5xl">Choose your battle</DialogTitle>
+          <DialogDescription>Your collection is your army. Pick where it fights.</DialogDescription>
+        </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {modes.map((mode) => (
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          {modes.map((mode, i) => {
+            const tile = (
+              <div className="plate [--c:14px] group flex h-full flex-col p-5 md:min-h-72">
+                <div
+                  className="pointer-events-none absolute inset-x-0 top-0 -z-[1] h-2/3 opacity-60 transition-opacity duration-700 ease-snap group-hover:opacity-100"
+                  style={{ background: `radial-gradient(90% 70% at 0% 0%, ${mode.accent}30, transparent 70%)` }}
+                />
+                <div className="flex items-start justify-between">
+                  <mode.icon className="size-9" strokeWidth={1.25} style={{ color: mode.accent }} />
+                  <span className="font-display text-[11px] font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+                    {mode.tag}
+                  </span>
+                </div>
+                <h3 className="mt-8 font-display text-3xl font-extrabold uppercase italic leading-none">{mode.title}</h3>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">{mode.description}</p>
+                <div className="mt-6 flex items-center justify-between font-display text-sm font-bold uppercase tracking-[0.18em]">
+                  <span style={{ color: mode.href ? mode.accent : undefined }} className={mode.href ? "" : "text-muted-foreground"}>
+                    {mode.href ? "Enter" : "Locked"}
+                  </span>
+                  <span className="chamfer [--c:5px] grid size-8 place-items-center bg-white/[0.06] transition-transform duration-500 ease-snap group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+                    {mode.href ? <ArrowUpRight className="size-4" strokeWidth={1.5} /> : <Lock className="size-3.5" strokeWidth={1.5} />}
+                  </span>
+                </div>
+              </div>
+            );
+            return (
               <motion.div
                 key={mode.title}
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: mode.delay }}
-                className="relative group"
+                initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.8, delay: 0.08 * i, ease: [0.32, 0.72, 0, 1] }}
+                className={mode.href ? "" : "opacity-50"}
               >
-                <div className="relative h-full flex flex-col p-6 rounded-2xl bg-[#0a0a0a] border border-white/5 group-hover:border-white/20 transition-all duration-500">
-                  <div
-                    className={`w-14 h-14 rounded-xl mb-6 flex items-center justify-center bg-gradient-to-br ${mode.color} shadow-lg transform group-hover:rotate-12 transition-transform duration-500`}
-                  >
-                    <mode.icon className="w-7 h-7 text-white" />
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-white mb-3 tracking-tighter italic">
-                    {mode.title.toUpperCase()}
-                  </h3>
-
-                  <p className="text-sm text-zinc-400 leading-relaxed mb-8 flex-grow">
-                    {mode.description}
-                  </p>
-
-                  <Link href={mode.href} className="mt-auto">
-                    <button
-                      className={`w-full py-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 group-hover:border-white/20 text-xs font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center space-x-2`}
-                    >
-                      <span>Play</span>
-                    </button>
+                {mode.href ? (
+                  <Link href={mode.href} className="block h-full">
+                    {tile}
                   </Link>
-                </div>
+                ) : (
+                  tile
+                )}
               </motion.div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </DialogContent>
     </Dialog>
