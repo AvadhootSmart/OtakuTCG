@@ -38,7 +38,7 @@ export default function RootLayout({
         </ThemeProvider>
         <Toaster
           theme="dark"
-          position="bottom-right"
+          position="top-center"
           toastOptions={{
             className: "!bg-[#0f0f15] !border-white/10 !text-foreground !font-sans !rounded-md",
           }}
